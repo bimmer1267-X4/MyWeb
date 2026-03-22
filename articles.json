@@ -1,0 +1,23 @@
+[
+  {
+    "slug": "vscode-ai-extensions-2026",
+    "title": "2026 年必裝 VSCode AI 外掛 Top 5：開發效率翻倍的祕密武器",
+    "youtubeId": "depV-_9wCPY",
+    "category": "PC",
+    "date": "2026-03-06",
+    "excerpt": "GitHub Copilot 只是起點！我們精選 5 款讓開發效率大幅提升的 VSCode AI 外掛，從程式碼補全、Debug 輔助到文件生成，全都包辦。",
+    "tags": [
+      "VSCode",
+      "AI",
+      "開發工具",
+      "PC"
+    ],
+    "content": [
+      "AI 程式碼輔助工具在 2026 年已經從「加分項目」變成「標配」。我們實際使用了數十款 VSCode AI 外掛後，篩選出五款對日常開發效率提升最明顯的工具。",
+      "第一名：GitHub Copilot（月費 $10）。老牌選手，在大型程式碼庫的理解能力上依然最強。最新版本加入了 Workspace Chat，可以用自然語言詢問「這個 function 被哪些地方呼叫」這類跨檔案問題。",
+      "第二名：Cursor（月費 $20）。技術上不算是 VSCode 外掛，而是基於 VSCode 的 Fork，但使用體驗幾乎相同。最大特點是 Composer 功能，可以一次指令修改跨多個檔案的程式碼，非常適合重構工作。",
+      "第三名：Codeium（免費）。免費版功能已非常完整，補全速度快，對 Python、TypeScript、Go 的支援特別好。不想付費的開發者首選。",
+      "第四名：Error Lens + GPT（免費）。把行內錯誤提示與 AI 解釋整合在一起，當游標停在紅線上，旁邊會直接顯示錯誤原因和修正建議，省去不斷查文件的時間。第五名：Mintlify Doc Writer（免費基本版）。自動生成 JSDoc/Python docstring，只需把游標放在 function 上按快捷鍵，完整的文件說明就自動生成，對維護大型專案非常有用。"
+    ]
+  }
+]
