@@ -27,11 +27,17 @@ function ytThumb(id) {
   return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
 }
 
-/** 縮圖載入失敗時降級 */
-function ytThumbFallback(img) {
+/** 縮圖載入後檢查：若是 120×90 預設灰圖則降級 */
+function ytThumbCheck(img) {
   const id = img.src.match(/vi\/([^/]+)\//)?.[1];
-  if (id && img.src.includes('maxresdefault')) {
-    img.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+  if (!id) return;
+  if (img.naturalWidth <= 120) {
+    // maxresdefault 不存在，改用 sddefault（640×480）
+    if (img.src.includes('maxresdefault')) {
+      img.src = `https://img.youtube.com/vi/${id}/sddefault.jpg`;
+    } else if (img.src.includes('sddefault')) {
+      img.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    }
   }
 }
 
@@ -229,7 +235,7 @@ function renderLatestSection(articles) {
   container.innerHTML = `
     <article class="featured-card card">
       <a href="article.html?slug=${featured.slug}" class="card-img-wrap">
-        <img src="${ytThumb(featured.youtubeId)}" alt="${featured.title}" loading="lazy" width="800" height="420" onerror="ytThumbFallback(this)">
+        <img src="${ytThumb(featured.youtubeId)}" alt="${featured.title}" loading="lazy" width="800" height="420" onload="ytThumbCheck(this)">
         <span class="card-tag">${featured.category}</span>
       </a>
       <div class="card-body">
@@ -246,7 +252,7 @@ function renderLatestSection(articles) {
       ${rest.map(a => `
         <article class="card small-card">
           <a href="article.html?slug=${a.slug}" class="card-img-wrap">
-            <img src="${ytThumb(a.youtubeId)}" alt="${a.title}" loading="lazy" width="400" height="250" onerror="ytThumbFallback(this)">
+            <img src="${ytThumb(a.youtubeId)}" alt="${a.title}" loading="lazy" width="400" height="250" onload="ytThumbCheck(this)">
             <span class="card-tag">${a.category}</span>
           </a>
           <div class="card-body">
@@ -317,7 +323,7 @@ function renderCategorySection(articles) {
   container.innerHTML = catArticles.map(a => `
     <article class="card">
       <a href="article.html?slug=${a.slug}" class="card-img-wrap">
-        <img src="${ytThumb(a.youtubeId)}" alt="${a.title}" loading="lazy" width="600" height="360" onerror="ytThumbFallback(this)">
+        <img src="${ytThumb(a.youtubeId)}" alt="${a.title}" loading="lazy" width="600" height="360" onload="ytThumbCheck(this)">
         <span class="card-tag">${a.category}</span>
       </a>
       <div class="card-body">
