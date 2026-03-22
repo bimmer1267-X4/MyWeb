@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZenTech 文章管理後台</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3247;
+    --accent: #4f8ef7;
+    --success: #34d399;
+    --danger: #f87171;
+    --warn: #fbbf24;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --radius: 10px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.6; }
+
+  #app { display: flex; min-height: 100vh; }
+  #sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; flex-shrink: 0; display: flex; flex-direction: column; }
+  #main { flex: 1; overflow-y: auto; }
+
+  .brand { padding: 0 20px 24px; border-bottom: 1px solid var(--border); }
+  .brand h1 { font-size: 18px; font-weight: 700; }
+  .brand h1 span { color: var(--accent); }
+  .brand p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .nav-section { padding: 16px 0; }
+  .nav-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 0 20px 8px; }
+  .nav-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 20px; background: none; border: none; color: var(--text); font-size: 13px; cursor: pointer; border-left: 3px solid transparent; transition: all .15s; text-align: left; }
+  .nav-btn:hover { background: var(--surface2); color: var(--accent); }
+  .nav-btn.active { background: var(--surface2); color: var(--accent); border-left-color: var(--accent); }
+  .nav-btn svg { opacity: .7; flex-shrink: 0; }
+  .sidebar-bottom { margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  .repo-badge { background: var(--surface2); border-radius: 6px; padding: 6px 8px; word-break: break-all; margin-top: 4px; font-family: monospace; font-size: 10px; }
+
+  .page-header { padding: 28px 32px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .page-header h2 { font-size: 20px; font-weight: 700; }
+  .page-actions { display: flex; gap: 8px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border: none; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; white-space: nowrap; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3b7be8; }
+  .btn-success { background: var(--success); color: #0a1a14; }
+  .btn-success:hover { background: #22c37a; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #ef4444; }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  .article-list { padding: 20px 32px; }
+  .list-controls { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .search-input { flex: 1; min-width: 180px; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 7px; padding: 7px 12px; font-size: 13px; }
+  .search-input::placeholder { color: var(--muted); }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+  .filter-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 7px; padding: 7px 10px; font-size: 13px; cursor: pointer; }
+  .article-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px; display: flex; gap: 16px; align-items: flex-start; transition: border-color .15s; }
+  .article-card:hover { border-color: var(--accent); }
+  .article-thumb { width: 80px; height: 52px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: var(--surface2); }
+  .article-info { flex: 1; min-width: 0; }
+  .article-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .article-meta { display: flex; gap: 10px; flex-wrap: wrap; }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 600; }
+  .badge-cat { background: #1e3a5f; color: #7ab3f5; }
+  .badge-date { color: var(--muted); }
+  .badge-slug { color: var(--muted); font-family: monospace; font-size: 10px; }
+  .article-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+
+  #editorPanel { padding: 20px 32px 40px; display: none; }
+  .editor-grid { display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
+  @media (max-width: 900px) { .editor-grid { grid-template-columns: 1fr; } }
+  .form-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .form-section h3 { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+  .field input, .field select, .field textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    border-radius: 7px; padding: 8px 11px; font-size: 13px; font-family: var(--font); transition: border-color .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  .tags-input-wrap { border: 1px solid var(--border); border-radius: 7px; padding: 6px 8px; background: var(--bg); display: flex; flex-wrap: wrap; gap: 5px; min-height: 38px; cursor: text; }
+  .tags-input-wrap:focus-within { border-color: var(--accent); }
+  .tag-chip { display: inline-flex; align-items: center; gap: 4px; background: #1e3a5f; color: #7ab3f5; border-radius: 4px; padding: 2px 7px; font-size: 12px; }
+  .tag-chip button { background: none; border: none; color: inherit; cursor: pointer; font-size: 14px; padding: 0; line-height: 1; opacity: .7; }
+  .tag-chip button:hover { opacity: 1; }
+  #tagsRealInput { border: none; background: none; color: var(--text); font-size: 13px; min-width: 80px; flex: 1; outline: none; padding: 1px 2px; }
+
+  .block-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+  .block-item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .block-type-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; }
+  .block-type-para { background: #1e3a5f; color: #7ab3f5; }
+  .block-type-img { background: #1a3d2b; color: #34d399; }
+  .block-move { background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+  .block-move:hover { color: var(--text); background: var(--surface2); }
+  .block-del { background: none; border: none; color: var(--muted); cursor: pointer; margin-left: auto; padding: 2px 6px; border-radius: 4px; }
+  .block-del:hover { color: var(--danger); }
+  .block-textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 7px 9px; font-size: 13px; font-family: var(--font); resize: vertical; min-height: 60px; }
+  .block-textarea:focus { outline: none; border-color: var(--accent); }
+  .img-preview-wrap { display: flex; align-items: center; gap: 10px; }
+  .img-preview { width: 80px; height: 52px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border); }
+  .img-info { font-size: 11px; color: var(--muted); }
+  .add-block-btns { display: flex; gap: 8px; margin-top: 8px; }
+
+  .yt-preview iframe { width: 100%; aspect-ratio: 16/9; border-radius: 8px; border: none; background: #000; }
+
+  #settingsPanel { padding: 20px 32px 40px; display: none; max-width: 560px; }
+
+  #toastContainer { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
+  .toast { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 13px; display: flex; align-items: center; gap: 8px; animation: slideIn .2s ease; max-width: 340px; }
+  .toast.success { border-color: var(--success); }
+  .toast.error { border-color: var(--danger); }
+  .toast.warn { border-color: var(--warn); }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; width: 420px; max-width: 95vw; }
+  .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .modal p { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .status-dot.green { background: var(--success); box-shadow: 0 0 6px var(--success); }
+  .status-dot.red { background: var(--danger); }
+  .loading-overlay { position: fixed; inset: 0; background: rgba(15,17,23,.8); display: flex; align-items: center; justify-content: center; z-index: 2000; flex-direction: column; gap: 12px; }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <nav id="sidebar">
+    <div class="brand">
+      <h1><span>Zen</span>Tech</h1>
+      <p>文章管理後台</p>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">管理</div>
+      <button class="nav-btn active" onclick="showView('list')" id="navList">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        文章列表
+      </button>
+      <button class="nav-btn" onclick="newArticle()" id="navNew">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增文章
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">系統</div>
+      <button class="nav-btn" onclick="showView('settings')" id="navSettings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.41 1.41M4.93 4.93a10 10 0 0 0-1.41 1.41M4.93 19.07a10 10 0 0 0 1.41 1.41M19.07 19.07a10 10 0 0 1-1.41 1.41M20 12h2M2 12h2M12 20v2M12 2v2"/></svg>
+        GitHub 設定
+      </button>
+      <button class="nav-btn" onclick="syncFromGitHub()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        從 GitHub 同步
+      </button>
+    </div>
+    <div class="sidebar-bottom">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText" style="margin-left:6px;font-size:11px;"></span>
+      <div class="repo-badge" id="repoLabel">未設定</div>
+    </div>
+  </nav>
+
+  <div id="main">
+
+    <!-- List View -->
+    <div id="listView">
+      <div class="page-header">
+        <h2 id="listTitle">文章列表</h2>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="syncFromGitHub()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            同步
+          </button>
+          <button class="btn btn-primary" onclick="newArticle()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新增文章
+          </button>
+        </div>
+      </div>
+      <div class="article-list">
+        <div class="list-controls">
+          <input type="text" class="search-input" id="searchInput" placeholder="搜尋標題、slug…" oninput="renderList()">
+          <select class="filter-select" id="catFilter" onchange="renderList()">
+            <option value="">全部分類</option>
+            <option>Apple</option><option>AI</option><option>PC</option>
+            <option>評測</option><option>生活</option><option>觀點</option>
+          </select>
+        </div>
+        <div id="articleListEl"></div>
+      </div>
+    </div>
+
+    <!-- Editor View -->
+    <div id="editorPanel">
+      <div class="page-header" style="padding-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn btn-ghost btn-sm" onclick="showView('list')">← 返回</button>
+          <h2 id="editorTitle">新增文章</h2>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost" onclick="showView('list')">取消</button>
+          <button class="btn btn-success" onclick="saveArticle()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            儲存並推送
+          </button>
+        </div>
+      </div>
+
+      <div class="editor-grid">
+        <div>
+          <div class="form-section">
+            <h3>基本資訊</h3>
+            <div class="field">
+              <label>標題 *</label>
+              <input type="text" id="fTitle" placeholder="文章標題">
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Slug（網址識別）*</label>
+                <input type="text" id="fSlug" placeholder="my-article-slug">
+                <div class="field-hint">英文、數字、連字號</div>
+              </div>
+              <div class="field">
+                <label>分類 *</label>
+                <select id="fCat">
+                  <option>Apple</option><option>AI</option><option>PC</option>
+                  <option>評測</option><option>生活</option><option>觀點</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>日期 *</label>
+                <input type="date" id="fDate">
+              </div>
+              <div class="field">
+                <label>YouTube ID</label>
+                <input type="text" id="fYtId" placeholder="depV-_9wCPY" oninput="updateYtPreview()">
+                <div class="field-hint">影片網址最後一段</div>
+              </div>
+            </div>
+            <div class="field">
+              <label>摘要</label>
+              <textarea id="fExcerpt" placeholder="文章摘要，顯示於卡片上…" style="min-height:60px;"></textarea>
+            </div>
+            <div class="field">
+              <label>標籤</label>
+              <div class="tags-input-wrap" id="tagsWrap" onclick="document.getElementById('tagsRealInput').focus()">
+                <input id="tagsRealInput" placeholder="輸入標籤後按 Enter">
+              </div>
+              <div class="field-hint">按 Enter 新增，Backspace 刪除</div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>文章內容</h3>
+            <div id="contentBlocks"></div>
+            <div class="add-block-btns">
+              <button class="btn btn-ghost btn-sm" onclick="addBlock('para')">＋ 段落</button>
+              <button class="btn btn-ghost btn-sm" onclick="addBlock('image')">＋ 圖片</button>
+            </div>
+            <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="handleImageFile(event)">
+          </div>
+        </div>
+
+        <div>
+          <div class="form-section yt-preview">
+            <h3>YouTube 預覽</h3>
+            <div id="ytPreviewWrap">
+              <div style="background:#111;aspect-ratio:16/9;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;">輸入 YouTube ID 後預覽</div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="ytIdLabel"></div>
+          </div>
+
+          <div class="form-section">
+            <h3>待上傳圖片</h3>
+            <div id="pendingImagesPanel" style="font-size:12px;color:var(--muted);">（無）</div>
+          </div>
+
+          <div class="form-section">
+            <h3>儲存說明</h3>
+            <div style="font-size:12px;color:var(--muted);line-height:2;">
+              <div>① 圖片壓縮至 ≤500KB</div>
+              <div>② 上傳圖片至 GitHub <code style="color:var(--text);">pic/</code></div>
+              <div>③ 更新 <code style="color:var(--text);">articles.json</code></div>
+              <div>④ GitHub Pages 約 1 分鐘後自動部署</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings View -->
+    <div id="settingsPanel">
+      <div class="page-header" style="padding:0 0 24px;">
+        <h2>GitHub 設定</h2>
+      </div>
+      <div class="form-section">
+        <h3>連線設定</h3>
+        <div class="field">
+          <label>Personal Access Token（PAT）</label>
+          <input type="password" id="sPat" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+          <div class="field-hint">需要 repo 權限 · 僅儲存於此瀏覽器的 localStorage</div>
+        </div>
+        <div class="field">
+          <label>Repository（owner/repo）</label>
+          <input type="text" id="sRepo" placeholder="bimmer1267-X4/MyWeb">
+        </div>
+        <div class="field">
+          <label>Branch</label>
+          <input type="text" id="sBranch" placeholder="main">
+        </div>
+        <div class="field">
+          <label>Commit 作者名稱</label>
+          <input type="text" id="sAuthorName" placeholder="ZenTech Admin">
+        </div>
+        <div class="field">
+          <label>Commit 作者 Email</label>
+          <input type="text" id="sAuthorEmail" placeholder="admin@example.com">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+          <button class="btn btn-primary" onclick="saveSettings()">儲存設定</button>
+          <button class="btn btn-ghost" onclick="testConnection()">測試連線</button>
+        </div>
+        <div id="connResult" style="margin-top:12px;font-size:12px;"></div>
+      </div>
+      <div class="form-section" style="margin-top:0;">
+        <h3>如何取得 PAT</h3>
+        <div style="font-size:12px;color:var(--muted);line-height:2;">
+          <div>1. GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)</div>
+          <div>2. Generate new token → 勾選 <code style="color:var(--text);">repo</code></div>
+          <div>3. 複製 token 貼到上方欄位後儲存</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script>
+'use strict';
+
+let articles = [];
+let articlesJsonSha = null;
+let editingIndex = -1;
+let contentBlocks = [];
+let pendingImageBlocks = [];
+let tags = [];
+let currentImgBlockIdx = null;
+
+const MAX_BYTES = 500 * 1024;
+
+// ── Settings ──────────────────────────────────────
+function getSettings() {
+  return {
+    pat:         localStorage.getItem('zh_pat') || '',
+    repo:        localStorage.getItem('zh_repo') || '',
+    branch:      localStorage.getItem('zh_branch') || 'main',
+    authorName:  localStorage.getItem('zh_author_name') || 'ZenTech Admin',
+    authorEmail: localStorage.getItem('zh_author_email') || 'admin@zentech.tw',
+  };
+}
+function saveSettings() {
+  localStorage.setItem('zh_pat',          document.getElementById('sPat').value.trim());
+  localStorage.setItem('zh_repo',         document.getElementById('sRepo').value.trim());
+  localStorage.setItem('zh_branch',       document.getElementById('sBranch').value.trim() || 'main');
+  localStorage.setItem('zh_author_name',  document.getElementById('sAuthorName').value.trim() || 'ZenTech Admin');
+  localStorage.setItem('zh_author_email', document.getElementById('sAuthorEmail').value.trim() || 'admin@zentech.tw');
+  updateStatusBar();
+  toast('設定已儲存', 'success');
+}
+function loadSettingsUI() {
+  const s = getSettings();
+  document.getElementById('sPat').value         = s.pat;
+  document.getElementById('sRepo').value        = s.repo;
+  document.getElementById('sBranch').value      = s.branch;
+  document.getElementById('sAuthorName').value  = s.authorName;
+  document.getElementById('sAuthorEmail').value = s.authorEmail;
+}
+async function testConnection() {
+  const s = getSettings();
+  if (!s.pat || !s.repo) { toast('請先填入 PAT 和 Repo', 'warn'); return; }
+  const el = document.getElementById('connResult');
+  el.textContent = '測試中…';
+  try {
+    const r = await ghApi(`repos/${s.repo}`);
+    el.innerHTML = `<span style="color:var(--success)">✓ 連線成功：${r.full_name}（${r.private ? '私人' : '公開'}）</span>`;
+  } catch(e) {
+    el.innerHTML = `<span style="color:var(--danger)">✗ 失敗：${e.message}</span>`;
+  }
+}
+function updateStatusBar() {
+  const s = getSettings();
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  const lbl = document.getElementById('repoLabel');
+  if (s.repo) {
+    dot.className = 'status-dot green';
+    txt.textContent = '已設定';
+    lbl.textContent = s.repo;
+  } else {
+    dot.className = 'status-dot red';
+    txt.textContent = '未設定';
+    lbl.textContent = '請到 GitHub 設定';
+  }
+}
+
+// ── GitHub API ─────────────────────────────────────
+async function ghApi(path, opts = {}) {
+  const s = getSettings();
+  const res = await fetch(`https://api.github.com/${path}`, {
+    headers: {
+      Authorization: `token ${s.pat}`,
+      Accept: 'application/vnd.github.v3+json',
+      ...(opts.headers || {}),
+    },
+    method: opts.method || 'GET',
+    body: opts.body || undefined,
+  });
+  if (!res.ok) {
+    const j = await res.json().catch(() => ({}));
+    throw new Error(j.message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+async function ghGetFile(filePath) {
+  const s = getSettings();
+  return ghApi(`repos/${s.repo}/contents/${filePath}?ref=${s.branch}`);
+}
+async function ghPutFile(filePath, contentBase64, message, sha = null) {
+  const s = getSettings();
+  const body = {
+    message,
+    content: contentBase64,
+    branch: s.branch,
+    committer: { name: s.authorName, email: s.authorEmail },
+  };
+  if (sha) body.sha = sha;
+  return ghApi(`repos/${s.repo}/contents/${filePath}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+async function ghListDir(dirPath) {
+  const s = getSettings();
+  try {
+    const items = await ghApi(`repos/${s.repo}/contents/${dirPath}?ref=${s.branch}`);
+    return Array.isArray(items) ? items : [];
+  } catch { return []; }
+}
+
+// ── Sync ───────────────────────────────────────────
+async function syncFromGitHub() {
+  const s = getSettings();
+  if (!s.pat || !s.repo) {
+    toast('請先在「GitHub 設定」填入 PAT 和 Repository', 'warn');
+    showView('settings');
+    return;
+  }
+  showLoading('正在從 GitHub 同步…');
+  try {
+    const file = await ghGetFile('articles.json');
+    articlesJsonSha = file.sha;
+    const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+    articles = JSON.parse(json);
+    renderList();
+    document.getElementById('listTitle').textContent = `文章列表（${articles.length} 篇）`;
+    toast(`已同步 ${articles.length} 篇文章`, 'success');
+  } catch(e) {
+    toast('同步失敗：' + e.message, 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+// ── Image compression ──────────────────────────────
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        const maxDim = 1920;
+        if (w > maxDim || h > maxDim) {
+          const ratio = Math.min(maxDim / w, maxDim / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+
+        const tryQuality = (q) => {
+          ctx.clearRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          canvas.toBlob(blob => {
+            if (!blob) { reject(new Error('壓縮失敗')); return; }
+            if (blob.size <= MAX_BYTES || q <= 0.3) {
+              if (blob.size > MAX_BYTES) scaleDimensions(img, blob.size);
+              else resolve(blob);
+            } else {
+              tryQuality(Math.round((q - 0.1) * 10) / 10);
+            }
+          }, 'image/jpeg', q);
+        };
+
+        const scaleDimensions = (imgEl, currentSize) => {
+          const ratio = Math.sqrt(MAX_BYTES / currentSize) * 0.95;
+          w = Math.max(1, Math.round(w * ratio));
+          h = Math.max(1, Math.round(h * ratio));
+          canvas.width = w; canvas.height = h;
+          const c = canvas.getContext('2d');
+          c.drawImage(imgEl, 0, 0, w, h);
+          canvas.toBlob(blob => {
+            if (!blob) { reject(new Error('壓縮失敗')); return; }
+            if (blob.size <= MAX_BYTES || w < 100) resolve(blob);
+            else scaleDimensions(imgEl, blob.size);
+          }, 'image/jpeg', 0.7);
+        };
+
+        tryQuality(0.85);
+      };
+      img.onerror = () => reject(new Error('無法讀取圖片'));
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// ── Filename generation ────────────────────────────
+async function generateFilename(category, date) {
+  const items = await ghListDir('pic');
+  const existingNames = items.filter(f => f.type === 'file').map(f => f.name);
+  const prefix = `${category}-${date.replace(/-/g, '')}-`;
+  const pendingCount = contentBlocks.filter(b => b._filename && b._filename.startsWith(prefix)).length;
+  let maxSeq = 0;
+  for (const name of existingNames) {
+    if (name.startsWith(prefix)) {
+      const m = name.match(/-(\d+)\.jpg$/i);
+      if (m) maxSeq = Math.max(maxSeq, parseInt(m[1], 10));
+    }
+  }
+  const seq = maxSeq + pendingCount + 1;
+  return `${prefix}${String(seq).padStart(2, '0')}.jpg`;
+}
+
+// ── Views ──────────────────────────────────────────
+function showView(view) {
+  document.getElementById('listView').style.display      = view === 'list'     ? 'block' : 'none';
+  document.getElementById('editorPanel').style.display   = view === 'editor'   ? 'block' : 'none';
+  document.getElementById('settingsPanel').style.display = view === 'settings' ? 'block' : 'none';
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (view === 'list')     document.getElementById('navList').classList.add('active');
+  if (view === 'settings') document.getElementById('navSettings').classList.add('active');
+  if (view === 'settings') loadSettingsUI();
+}
+
+// ── Article list ───────────────────────────────────
+function renderList() {
+  const q   = (document.getElementById('searchInput').value || '').toLowerCase();
+  const cat = document.getElementById('catFilter').value;
+  const el  = document.getElementById('articleListEl');
+  const filtered = articles.filter(a => {
+    const matchQ   = !q || a.title.toLowerCase().includes(q) || (a.slug || '').toLowerCase().includes(q);
+    const matchCat = !cat || a.category === cat;
+    return matchQ && matchCat;
+  });
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty-state"><p>沒有找到文章${articles.length ? '' : '，請先同步 GitHub'}</p></div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(a => {
+    const realIdx = articles.indexOf(a);
+    const thumb = a.youtubeId
+      ? `https://img.youtube.com/vi/${a.youtubeId}/mqdefault.jpg`
+      : '';
+    return `
+    <div class="article-card">
+      ${thumb ? `<img class="article-thumb" src="${esc(thumb)}" alt="" loading="lazy">` : '<div class="article-thumb"></div>'}
+      <div class="article-info">
+        <div class="article-title">${esc(a.title)}</div>
+        <div class="article-meta">
+          <span class="badge badge-cat">${esc(a.category || '')}</span>
+          <span class="badge badge-date">${esc(a.date || '')}</span>
+          <span class="badge badge-slug">${esc(a.slug || '')}</span>
+        </div>
+      </div>
+      <div class="article-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editArticle(${realIdx})">編輯</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete(${realIdx})">刪除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Editor ─────────────────────────────────────────
+function newArticle() {
+  editingIndex = -1;
+  contentBlocks = [];
+  pendingImageBlocks = [];
+  tags = [];
+  document.getElementById('fTitle').value   = '';
+  document.getElementById('fSlug').value    = '';
+  document.getElementById('fCat').value     = 'Apple';
+  document.getElementById('fDate').value    = new Date().toISOString().slice(0, 10);
+  document.getElementById('fYtId').value    = '';
+  document.getElementById('fExcerpt').value = '';
+  document.getElementById('editorTitle').textContent = '新增文章';
+  renderTagsUI();
+  renderContentBlocks();
+  updateYtPreview();
+  updatePendingPanel();
+  showView('editor');
+}
+
+function editArticle(idx) {
+  editingIndex = idx;
+  const a = articles[idx];
+  pendingImageBlocks = [];
+  tags = Array.isArray(a.tags) ? [...a.tags] : [];
+  document.getElementById('fTitle').value   = a.title || '';
+  document.getElementById('fSlug').value    = a.slug  || '';
+  document.getElementById('fCat').value     = a.category || 'Apple';
+  document.getElementById('fDate').value    = a.date  || '';
+  document.getElementById('fYtId').value    = a.youtubeId || '';
+  document.getElementById('fExcerpt').value = a.excerpt || '';
+  document.getElementById('editorTitle').textContent = '編輯文章';
+  contentBlocks = (a.content || []).map(item => {
+    if (typeof item === 'string') return { type: 'para', text: item };
+    if (item.type === 'image')   return { type: 'image', src: item.src, alt: item.alt || '', caption: item.caption || '' };
+    return { type: 'para', text: String(item) };
+  });
+  renderTagsUI();
+  renderContentBlocks();
+  updateYtPreview();
+  updatePendingPanel();
+  showView('editor');
+}
+
+// Tags
+function renderTagsUI() {
+  const wrap  = document.getElementById('tagsWrap');
+  const input = document.getElementById('tagsRealInput');
+  wrap.querySelectorAll('.tag-chip').forEach(el => el.remove());
+  tags.forEach((tag, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'tag-chip';
+    chip.innerHTML = `${esc(tag)}<button onclick="removeTag(${i})" tabindex="-1">×</button>`;
+    wrap.insertBefore(chip, input);
+  });
+}
+function removeTag(i) { tags.splice(i, 1); renderTagsUI(); }
+
+// Content blocks
+function renderContentBlocks() {
+  const el = document.getElementById('contentBlocks');
+  if (!contentBlocks.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px 0;">尚無內容，請點下方按鈕新增段落或圖片</div>';
+    return;
+  }
+  el.innerHTML = contentBlocks.map((b, i) => {
+    if (b.type === 'para') {
+      return `<div class="block-item">
+        <div class="block-item-header">
+          <span class="block-type-badge block-type-para">段落</span>
+          <button class="block-move" onclick="moveBlock(${i},-1)">↑</button>
+          <button class="block-move" onclick="moveBlock(${i},1)">↓</button>
+          <button class="block-del" onclick="deleteBlock(${i})">✕</button>
+        </div>
+        <textarea class="block-textarea" oninput="contentBlocks[${i}].text=this.value">${esc(b.text || '')}</textarea>
+      </div>`;
+    }
+    if (b.type === 'image') {
+      const imgSrc = b._objectUrl || b.src || '';
+      const fname  = b._filename || (b.src ? b.src.split('/').pop() : '');
+      return `<div class="block-item">
+        <div class="block-item-header">
+          <span class="block-type-badge block-type-img">圖片</span>
+          <button class="block-move" onclick="moveBlock(${i},-1)">↑</button>
+          <button class="block-move" onclick="moveBlock(${i},1)">↓</button>
+          <button class="block-del" onclick="deleteBlock(${i})">✕</button>
+        </div>
+        ${imgSrc ? `<div class="img-preview-wrap">
+          <img class="img-preview" src="${esc(imgSrc)}" alt="">
+          <div class="img-info">
+            <div>${esc(fname)}</div>
+            ${b._sizeKb ? `<div style="color:var(--success)">${b._sizeKb} KB（壓縮後）</div>` : ''}
+            ${b._file ? `<div style="color:var(--warn);font-size:10px;">待上傳至 GitHub</div>` : ''}
+          </div>
+        </div>` : ''}
+        <button class="btn btn-ghost btn-sm" style="margin:8px 0;" onclick="pickImage(${i})">${imgSrc ? '更換圖片' : '選擇圖片'}</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input class="block-textarea" style="min-height:auto;" placeholder="Alt 文字" value="${esc(b.alt || '')}" oninput="contentBlocks[${i}].alt=this.value">
+          <input class="block-textarea" style="min-height:auto;" placeholder="圖說（選填）" value="${esc(b.caption || '')}" oninput="contentBlocks[${i}].caption=this.value">
+        </div>
+      </div>`;
+    }
+    return '';
+  }).join('');
+}
+
+function addBlock(type) {
+  contentBlocks.push(type === 'para' ? { type:'para', text:'' } : { type:'image', src:'', alt:'', caption:'' });
+  renderContentBlocks();
+}
+function deleteBlock(i) { contentBlocks.splice(i, 1); renderContentBlocks(); updatePendingPanel(); }
+function moveBlock(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= contentBlocks.length) return;
+  [contentBlocks[i], contentBlocks[j]] = [contentBlocks[j], contentBlocks[i]];
+  renderContentBlocks();
+}
+function pickImage(blockIdx) {
+  currentImgBlockIdx = blockIdx;
+  document.getElementById('imgFileInput').value = '';
+  document.getElementById('imgFileInput').click();
+}
+async function handleImageFile(event) {
+  const file = event.target.files[0];
+  if (!file || currentImgBlockIdx === null) return;
+  const idx  = currentImgBlockIdx;
+  const cat  = document.getElementById('fCat').value;
+  const date = document.getElementById('fDate').value || new Date().toISOString().slice(0, 10);
+  showLoading('壓縮圖片中…');
+  try {
+    const compressed = await compressImage(file);
+    const sizeKb = Math.round(compressed.size / 1024);
+    const fname  = await generateFilename(cat, date);
+    const path   = `pic/${fname}`;
+    const objectUrl = URL.createObjectURL(compressed);
+    const old = contentBlocks[idx];
+    if (old._objectUrl) URL.revokeObjectURL(old._objectUrl);
+    contentBlocks[idx] = {
+      type: 'image', src: path, alt: old.alt || '', caption: old.caption || '',
+      _file: compressed, _filename: fname, _objectUrl: objectUrl, _sizeKb: sizeKb,
+    };
+    renderContentBlocks();
+    updatePendingPanel();
+    toast(`已壓縮：${sizeKb} KB → ${fname}`, 'success');
+  } catch(e) {
+    toast('圖片處理失敗：' + e.message, 'error');
+  } finally {
+    hideLoading();
+    currentImgBlockIdx = null;
+  }
+}
+function updatePendingPanel() {
+  const el = document.getElementById('pendingImagesPanel');
+  const pending = contentBlocks.filter(b => b.type === 'image' && b._file);
+  if (!pending.length) { el.innerHTML = '<span style="color:var(--muted)">（無待上傳圖片）</span>'; return; }
+  el.innerHTML = pending.map(b =>
+    `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);">
+      <span style="font-family:monospace;font-size:11px;">${esc(b._filename)}</span>
+      <span style="font-size:11px;color:${b._sizeKb <= 500 ? 'var(--success)' : 'var(--warn)'};">${b._sizeKb} KB</span>
+    </div>`
+  ).join('');
+}
+
+// YouTube preview
+function updateYtPreview() {
+  const id   = document.getElementById('fYtId').value.trim();
+  const wrap = document.getElementById('ytPreviewWrap');
+  const lbl  = document.getElementById('ytIdLabel');
+  if (id) {
+    wrap.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen loading="lazy" style="width:100%;aspect-ratio:16/9;border-radius:8px;border:none;"></iframe>`;
+    lbl.textContent = `ID: ${id}`;
+  } else {
+    wrap.innerHTML = `<div style="background:#111;aspect-ratio:16/9;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;">輸入 YouTube ID 後預覽</div>`;
+    lbl.textContent = '';
+  }
+}
+
+// ── Save article ───────────────────────────────────
+async function saveArticle() {
+  const title   = document.getElementById('fTitle').value.trim();
+  const slug    = document.getElementById('fSlug').value.trim();
+  const cat     = document.getElementById('fCat').value;
+  const date    = document.getElementById('fDate').value;
+  const ytId    = document.getElementById('fYtId').value.trim();
+  const excerpt = document.getElementById('fExcerpt').value.trim();
+
+  if (!title) { toast('請填入文章標題', 'warn'); return; }
+  if (!slug)  { toast('請填入 Slug', 'warn'); return; }
+  if (!date)  { toast('請選擇日期', 'warn'); return; }
+
+  const dupIdx = articles.findIndex((a, i) => a.slug === slug && i !== editingIndex);
+  if (dupIdx >= 0) { toast(`Slug "${slug}" 已被其他文章使用`, 'warn'); return; }
+
+  const s = getSettings();
+  if (!s.pat || !s.repo) { toast('請先設定 GitHub PAT 和 Repo', 'warn'); showView('settings'); return; }
+
+  // Upload pending images
+  const pending = contentBlocks.filter(b => b.type === 'image' && b._file);
+  if (pending.length) {
+    showLoading(`上傳 ${pending.length} 張圖片中…`);
+    for (const b of pending) {
+      try {
+        const b64 = await blobToBase64(b._file);
+        let existingSha = null;
+        try { const ex = await ghGetFile(b.src); existingSha = ex.sha; } catch {}
+        await ghPutFile(b.src, b64, `upload image: ${b._filename}`, existingSha);
+        URL.revokeObjectURL(b._objectUrl);
+        delete b._file; delete b._objectUrl; delete b._sizeKb; delete b._filename;
+        toast(`已上傳：${b.src}`, 'success');
+      } catch(e) {
+        hideLoading();
+        toast('圖片上傳失敗：' + e.message, 'error');
+        return;
+      }
+    }
+  }
+
+  // Build article object
+  const content = contentBlocks
+    .map(b => {
+      if (b.type === 'para') return b.text || '';
+      return { type:'image', src: b.src, alt: b.alt || '', caption: b.caption || '' };
+    })
+    .filter(x => typeof x !== 'string' || x.trim());
+
+  const article = { slug, title, youtubeId: ytId, category: cat, date, excerpt, tags: [...tags], content };
+
+  if (editingIndex >= 0) articles[editingIndex] = article;
+  else articles.unshift(article);
+
+  // Push articles.json
+  showLoading('更新 articles.json…');
+  try {
+    const json = JSON.stringify(articles, null, 2);
+    const b64  = btoa(unescape(encodeURIComponent(json)));
+    const result = await ghPutFile('articles.json', b64,
+      `${editingIndex >= 0 ? 'update' : 'add'} article: ${slug}`,
+      articlesJsonSha
+    );
+    articlesJsonSha = result.content.sha;
+    document.getElementById('listTitle').textContent = `文章列表（${articles.length} 篇）`;
+    toast(editingIndex >= 0 ? '文章已更新' : '文章已新增', 'success');
+    showView('list');
+    renderList();
+  } catch(e) {
+    if (editingIndex < 0) articles.shift();
+    toast('儲存失敗：' + e.message, 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+// ── Delete ─────────────────────────────────────────
+function confirmDelete(idx) {
+  const a = articles[idx];
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `<div class="modal">
+    <h3>刪除文章</h3>
+    <p>確定要刪除「${esc(a.title)}」？<br><strong style="color:var(--warn)">圖片不會自動刪除</strong>，請之後手動到 GitHub 刪除 pic/ 下的對應圖片。</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">取消</button>
+      <button class="btn btn-danger" onclick="deleteArticle(${idx})">確認刪除</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+async function deleteArticle(idx) {
+  document.querySelector('.modal-overlay')?.remove();
+  const s = getSettings();
+  if (!s.pat || !s.repo) { toast('請先設定 GitHub PAT 和 Repo', 'warn'); return; }
+  const removed = articles.splice(idx, 1)[0];
+  showLoading('刪除文章中…');
+  try {
+    const json = JSON.stringify(articles, null, 2);
+    const b64  = btoa(unescape(encodeURIComponent(json)));
+    const result = await ghPutFile('articles.json', b64, `delete article: ${removed.slug}`, articlesJsonSha);
+    articlesJsonSha = result.content.sha;
+    renderList();
+    document.getElementById('listTitle').textContent = `文章列表（${articles.length} 篇）`;
+    toast(`已刪除：${removed.title}`, 'success');
+  } catch(e) {
+    articles.splice(idx, 0, removed);
+    toast('刪除失敗：' + e.message, 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+// ── Toast ──────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const icons = { success:'✓', error:'✕', warn:'⚠', info:'ℹ' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type] || 'ℹ'}</span><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ── Loading ────────────────────────────────────────
+let loadingEl = null;
+function showLoading(msg = '處理中…') {
+  if (loadingEl) loadingEl.remove();
+  loadingEl = document.createElement('div');
+  loadingEl.className = 'loading-overlay';
+  loadingEl.innerHTML = `<div class="spinner"></div><div style="color:var(--muted);font-size:13px;">${msg}</div>`;
+  document.body.appendChild(loadingEl);
+}
+function hideLoading() { if (loadingEl) { loadingEl.remove(); loadingEl = null; } }
+
+// ── Util ───────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ───────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Auto slug from title (new articles only)
+  document.getElementById('fTitle').addEventListener('input', e => {
+    if (editingIndex === -1) {
+      document.getElementById('fSlug').value = e.target.value
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .trim()
+        .replace(/[\s_]+/g, '-')
+        .replace(/-+/g, '-')
+        .slice(0, 60);
+    }
+  });
+
+  // Tags keyboard
+  document.getElementById('tagsRealInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = e.target.value.trim();
+      if (val && !tags.includes(val)) { tags.push(val); renderTagsUI(); }
+      e.target.value = '';
+    } else if (e.key === 'Backspace' && !e.target.value && tags.length) {
+      tags.pop(); renderTagsUI();
+    }
+  });
+
+  updateStatusBar();
+  showView('list');
+
+  const s = getSettings();
+  if (s.pat && s.repo) syncFromGitHub();
+  else showView('settings');
+});
+</script>
+</body>
+</html>

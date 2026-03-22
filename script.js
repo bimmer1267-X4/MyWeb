@@ -58,39 +58,144 @@ async function loadArticles() {
    首頁渲染
    ============================================================ */
 
-/** 渲染 Hero 輪播（前 3 篇） */
-function renderHeroSlider(articles) {
-  const heroArticles = articles.slice(0, 3);
-  const track = document.getElementById('sliderTrack');
-  const dotsContainer = document.getElementById('sliderDots');
-  if (!track || !dotsContainer) return;
+/* ── 即時新聞來源設定 ── */
+const NEWS_SOURCES = [
+  {
+    name: '科技新報',
+    url: 'https://technews.tw/feed/',
+    bg: '#172554', text: '#93c5fd',
+  },
+  {
+    name: '數位時代',
+    url: 'https://www.bnext.com.tw/rss',
+    bg: '#14532d', text: '#86efac',
+  },
+  {
+    name: 'iThome',
+    url: 'https://www.ithome.com.tw/rss',
+    bg: '#431407', text: '#fdba74',
+  },
+];
 
-  track.innerHTML = heroArticles.map(a => `
-    <article class="slide" style="--bg: url('${ytThumb(a.youtubeId)}')">
-      <div class="slide-overlay"></div>
-      <div class="slide-content">
-        <span class="tag">${a.category}</span>
-        <h2><a href="article.html?slug=${a.slug}">${a.title}</a></h2>
-        <div class="slide-meta">
-          <time datetime="${a.date}">${formatDate(a.date)}</time>
-        </div>
-      </div>
-    </article>
-  `).join('');
-
-  dotsContainer.innerHTML = heroArticles.map((_, i) => `
-    <button class="dot${i === 0 ? ' active' : ''}" role="tab"
-      aria-selected="${i === 0}" aria-label="第 ${i + 1} 張"></button>
-  `).join('');
+/** 把 RSS 日期距今轉為「xx 分鐘前」格式 */
+function timeAgo(date) {
+  const mins = Math.floor((Date.now() - date) / 60000);
+  if (mins < 1)  return '剛剛';
+  if (mins < 60) return `${mins} 分鐘前`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)  return `${hrs} 小時前`;
+  return `${Math.floor(hrs / 24)} 天前`;
 }
 
-/** 渲染「最新文章」欄（精選卡 + 小卡 grid） */
+/** 透過 rss2json 抓取單一來源 */
+async function fetchRSS(source) {
+  const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}&count=10`;
+  try {
+    const res = await fetch(api);
+    const data = await res.json();
+    if (data.status !== 'ok') return [];
+    return data.items.map(item => ({
+      title:   item.title.trim(),
+      link:    item.link,
+      pubDate: new Date(item.pubDate),
+      source:  source.name,
+      bg:      source.bg,
+      text:    source.text,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/** 渲染即時科技新聞區（取代 Hero Slider） */
+async function renderNewsHero() {
+  const container = document.getElementById('newsHero');
+  if (!container) return;
+
+  // 並行抓取所有來源
+  const results = await Promise.all(NEWS_SOURCES.map(fetchRSS));
+  const all = results.flat().sort((a, b) => b.pubDate - a.pubDate);
+
+  if (!all.length) {
+    container.innerHTML = '<p class="news-error">暫時無法取得新聞資料，請稍後重新整理。</p>';
+    return;
+  }
+
+  const items = all.slice(0, 16);
+
+  container.innerHTML = `
+    <div class="news-hero-header">
+      <span class="news-live-dot"></span>
+      <span class="news-hero-label">即時科技新聞</span>
+      <div class="news-source-tags">
+        ${NEWS_SOURCES.map(s =>
+          `<span class="news-stag" style="background:${s.bg};color:${s.text};">${s.name}</span>`
+        ).join('')}
+      </div>
+    </div>
+    <ul class="news-list">
+      ${items.map(item => `
+        <li class="news-item">
+          <span class="news-badge" style="background:${item.bg};color:${item.text};">${item.source}</span>
+          <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+          <span class="news-time">${timeAgo(item.pubDate)}</span>
+        </li>
+      `).join('')}
+    </ul>
+  `;
+}
+
+const PER_PAGE = 7; // 每頁：1 精選 + 6 小卡
+
+/** 產生分頁網址 */
+function pageUrl(p, cat, tag) {
+  const params = new URLSearchParams();
+  if (cat) params.set('cat', cat);
+  if (tag) params.set('tag', tag);
+  if (p > 1) params.set('page', String(p));
+  const q = params.toString();
+  return `index.html${q ? '?' + q : ''}`;
+}
+
+/** 渲染頁碼列 */
+function renderPagination(current, total, cat, tag) {
+  if (total <= 1) return '';
+
+  // 產生頁碼序列（含省略號）
+  const nums = [];
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || Math.abs(i - current) <= 1) {
+      nums.push(i);
+    } else if (nums[nums.length - 1] !== '…') {
+      nums.push('…');
+    }
+  }
+
+  const prev = current > 1
+    ? `<a href="${pageUrl(current - 1, cat, tag)}" class="page-btn" aria-label="上一頁">‹</a>`
+    : `<span class="page-btn disabled">‹</span>`;
+  const next = current < total
+    ? `<a href="${pageUrl(current + 1, cat, tag)}" class="page-btn" aria-label="下一頁">›</a>`
+    : `<span class="page-btn disabled">›</span>`;
+
+  const pages = nums.map(n =>
+    n === '…'
+      ? `<span class="page-ellipsis">…</span>`
+      : `<a href="${pageUrl(n, cat, tag)}" class="page-btn${n === current ? ' active' : ''}">${n}</a>`
+  ).join('');
+
+  return `<nav class="pagination" aria-label="文章分頁">${prev}${pages}${next}</nav>`;
+}
+
+/** 渲染「最新文章」欄（精選卡 + 小卡 grid + 分頁） */
 function renderLatestSection(articles) {
   const container = document.getElementById('latestArticles');
   if (!container) return;
 
-  const cat = getParam('cat');
-  const tag = getParam('tag');
+  const cat  = getParam('cat');
+  const tag  = getParam('tag');
+  const page = Math.max(1, parseInt(getParam('page') || '1', 10));
+
   let filtered = articles;
   if (cat) filtered = articles.filter(a => a.category === cat);
   if (tag) filtered = articles.filter(a => a.tags.includes(tag));
@@ -108,8 +213,10 @@ function renderLatestSection(articles) {
     return;
   }
 
-  const [featured, ...rest] = filtered;
-  const smallCards = rest.slice(0, 6);
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const safePage   = Math.min(page, totalPages);
+  const pageItems  = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+  const [featured, ...rest] = pageItems;
 
   container.innerHTML = `
     <article class="featured-card card">
@@ -126,9 +233,9 @@ function renderLatestSection(articles) {
       </div>
     </article>
 
-    ${smallCards.length > 0 ? `
+    ${rest.length > 0 ? `
     <div class="cards-grid">
-      ${smallCards.map(a => `
+      ${rest.map(a => `
         <article class="card small-card">
           <a href="article.html?slug=${a.slug}" class="card-img-wrap">
             <img src="${ytThumb(a.youtubeId)}" alt="${a.title}" loading="lazy" width="400" height="250">
@@ -143,7 +250,22 @@ function renderLatestSection(articles) {
         </article>
       `).join('')}
     </div>` : ''}
+
+    ${renderPagination(safePage, totalPages, cat, tag)}
   `;
+}
+
+/** 渲染熱門標籤（從所有文章的 tags 統計） */
+function renderTagCloud(articles) {
+  const el = document.getElementById('tagCloud');
+  if (!el) return;
+  const count = {};
+  articles.forEach(a => (a.tags || []).forEach(t => { count[t] = (count[t] || 0) + 1; }));
+  const sorted = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 20);
+  if (!sorted.length) { el.style.display = 'none'; return; }
+  el.innerHTML = sorted.map(([tag]) =>
+    `<a href="index.html?tag=${encodeURIComponent(tag)}" class="tag-item">${tag}</a>`
+  ).join('');
 }
 
 /** 渲染熱門文章側邊欄（前 5 篇） */
@@ -306,67 +428,6 @@ function renderArticlePage(articles) {
 }
 
 /* ============================================================
-   Hero 輪播邏輯
-   ============================================================ */
-function initSlider() {
-  const track = document.getElementById('sliderTrack');
-  const dotsContainer = document.getElementById('sliderDots');
-  const prevBtn = document.getElementById('sliderPrev');
-  const nextBtn = document.getElementById('sliderNext');
-  if (!track) return;
-
-  const dots = dotsContainer ? dotsContainer.querySelectorAll('.dot') : [];
-  const total = dots.length;
-  if (total === 0) return;
-
-  let current = 0;
-  let isPaused = false;
-  let autoplayTimer = null;
-
-  function goTo(index) {
-    current = (index + total) % total;
-    track.style.transform = `translateX(-${current * 100}%)`;
-    dots.forEach((d, i) => {
-      d.classList.toggle('active', i === current);
-      d.setAttribute('aria-selected', i === current ? 'true' : 'false');
-    });
-  }
-
-  function next() { goTo(current + 1); }
-  function prev() { goTo(current - 1); }
-
-  function startAutoplay() {
-    if (autoplayTimer) clearInterval(autoplayTimer);
-    autoplayTimer = setInterval(() => { if (!isPaused) next(); }, 4000);
-  }
-
-  function deferResume() {
-    isPaused = true;
-    clearTimeout(window._sliderResumeTimer);
-    window._sliderResumeTimer = setTimeout(() => { isPaused = false; }, 6000);
-  }
-
-  dots.forEach((dot, i) => {
-    dot.addEventListener('click', () => { goTo(i); deferResume(); });
-  });
-  prevBtn?.addEventListener('click', () => { prev(); deferResume(); });
-  nextBtn?.addEventListener('click', () => { next(); deferResume(); });
-
-  let touchStartX = 0;
-  track.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
-  track.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(dx) > 40) { dx < 0 ? next() : prev(); deferResume(); }
-  }, { passive: true });
-
-  track.addEventListener('mouseenter', () => { isPaused = true; });
-  track.addEventListener('mouseleave', () => { isPaused = false; });
-
-  goTo(0);
-  startAutoplay();
-}
-
-/* ============================================================
    漢堡選單
    ============================================================ */
 function initHamburger() {
@@ -412,11 +473,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 文章頁
     renderArticlePage(articles);
   } else {
-    // 首頁
-    renderHeroSlider(articles);
-    initSlider();
+    // 首頁：並行執行新聞抓取 + 文章渲染
+    renderNewsHero(); // 不 await，讓新聞與文章同時載入
     renderLatestSection(articles);
     renderPopularList(articles);
+    renderTagCloud(articles);
     renderCategorySection(articles);
   }
 });

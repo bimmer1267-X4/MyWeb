@@ -13,7 +13,7 @@
   <header class="site-header">
     <div class="header-inner container">
       <a href="index.html" class="logo" aria-label="ZenTech首頁">
-        <span class="logo-k">Zen</span><span class="logo-sub">Tech</span>
+        <img src="pic/logo/logo.png" alt="順順來" class="logo-img"><span class="logo-k">Zen</span><span class="logo-sub">Tech</span>
       </a>
 
       <nav class="main-nav" id="mainNav" aria-label="主要導覽">
@@ -25,6 +25,7 @@
           <li><a href="index.html?cat=評測">評測</a></li>
           <li><a href="index.html?cat=生活">生活</a></li>
           <li><a href="index.html?cat=觀點">觀點</a></li>
+          <li><a href="about.html">關於我</a></li>
         </ul>
       </nav>
 
@@ -39,20 +40,11 @@
 
   <main>
 
-    <!-- ==================== HERO SLIDER ==================== -->
-    <section class="hero-section" aria-label="精選文章輪播">
-      <div class="slider-track" id="sliderTrack">
-        <!-- JS 動態填入 -->
+    <!-- ==================== NEWS HERO ==================== -->
+    <section class="news-hero-section" aria-label="即時科技新聞">
+      <div class="container">
+        <div id="newsHero"><div class="loading-spinner" style="margin:40px auto;"></div></div>
       </div>
-      <div class="slider-dots" id="sliderDots" role="tablist" aria-label="輪播控制">
-        <!-- JS 動態填入 -->
-      </div>
-      <button class="slider-arrow prev" id="sliderPrev" aria-label="上一張">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <button class="slider-arrow next" id="sliderNext" aria-label="下一張">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
     </section>
 
     <!-- ==================== MAGAZINE GRID ==================== -->
@@ -93,18 +85,7 @@
 
           <div class="widget">
             <h3 class="widget-title">熱門標籤</h3>
-            <div class="tag-cloud">
-              <a href="index.html?tag=iPhone" class="tag-item">iPhone</a>
-              <a href="index.html?tag=AI" class="tag-item">AI</a>
-              <a href="index.html?tag=MacBook" class="tag-item">MacBook</a>
-              <a href="index.html?tag=Android" class="tag-item">Android</a>
-              <a href="index.html?tag=GPU" class="tag-item">GPU</a>
-              <a href="index.html?tag=ChatGPT" class="tag-item">ChatGPT</a>
-              <a href="index.html?tag=開箱" class="tag-item">開箱</a>
-              <a href="index.html?tag=評測" class="tag-item">評測</a>
-              <a href="index.html?tag=資安" class="tag-item">資安</a>
-              <a href="index.html?tag=電競" class="tag-item">電競</a>
-            </div>
+            <div class="tag-cloud" id="tagCloud"></div>
           </div>
         </aside>
 
@@ -132,7 +113,7 @@
       <div class="footer-grid">
         <div class="footer-brand">
           <a href="index.html" class="logo" aria-label="ZenTech首頁">
-            <span class="logo-k">Zen</span><span class="logo-sub">Tech</span>
+            <img src="pic/logo/logo.png" alt="順順來" class="logo-img"><span class="logo-k">Zen</span><span class="logo-sub">Tech</span>
           </a>
           <p>順順來ＹＴ頻道官方網站，深入報導科技趨勢，提供最專業的產品評測與數位生活指南。</p>
           <div class="social-links">
@@ -154,20 +135,15 @@
             <li><a href="index.html?cat=Apple">Apple</a></li>
             <li><a href="index.html?cat=AI">AI人工智慧</a></li>
             <li><a href="index.html?cat=PC">PC&amp;DIY</a></li>
-            <li><a href="index.html?cat=評測">產品評測</a></li>
-            <li><a href="index.html?cat=生活">數位生活</a></li>
-            <li><a href="index.html?cat=觀點">新知觀點</a></li>
           </ul>
         </div>
 
         <div class="footer-col">
-          <h4>關於</h4>
+          <h4>&nbsp;</h4>
           <ul>
-            <li><a href="#">關於我們</a></li>
-            <li><a href="#">聯絡我們</a></li>
-            <li><a href="#">廣告合作</a></li>
-            <li><a href="#">隱私政策</a></li>
-            <li><a href="#">使用條款</a></li>
+            <li><a href="index.html?cat=評測">產品評測</a></li>
+            <li><a href="index.html?cat=生活">數位生活</a></li>
+            <li><a href="index.html?cat=觀點">新知觀點</a></li>
           </ul>
         </div>
       </div>
