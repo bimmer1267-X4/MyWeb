@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "slug": "0-token-ai-ai",
+    "title": "龍蝦 0 Token AI生成的影片 | 你會被AI取代嗎？",
+    "youtubeId": "",
+    "category": "AI",
+    "date": "2026-03-22",
+    "excerpt": "使用龍蝦請善用核心架構與成本策略（雙層 Agent 套利）",
+    "tags": [
+      "AI",
+      "龍蝦",
+      "openclaw",
+      "claude"
+    ],
+    "content": [
+      "一、 核心架構與成本策略（雙層 Agent 套利）\n本系統將輕量級調度與重度運算完美分離，最大化利用現有資源：\n\n前端指揮官（OpenClaw 龍蝦）： 採用輕快且成本極低的 claude-haiku-4-5 模型，專職負責接收指令與意圖判斷，維持系統的敏捷反應。\n\n後端重裝勞力（Claude Code CLI）： 透過 OpenClaw 專屬 Skill 在背景喚醒。將極耗 Token 的「長文本推理、影片寫稿、編寫程式碼」等重度邏輯運算，全部轉嫁給綁定 Claude Pro 訂閱的 CLI 工具，實現重度運算「吃到飽」，達成零額外 API 算力成本。",
+      "二、 影片生成的四個全自動化執行階段：\n\n大腦企劃（Claude Code）： 負責深度推理，自動生成影片整體企劃、投影片的文字大綱，以及精確對應的講稿逐字稿。\n\n視覺生成（Python 腳本）： Claude Code 自動編寫並執行腳本，將前一步生成的文字無縫轉換為靜態簡報圖檔（Slides）。\n\n語音生成（本機硬體資源）： 直接呼叫 Mac mini M4 底層的 macOS 內建指令（或輕量化 TTS），將逐字稿轉換為配音音檔。\n\n影音合成（FFmpeg / MoviePy）： 最後驅動 FFmpeg 或 MoviePy，將「靜態圖片」與「配音音軌」進行時間軸上的精準對齊，渲染輸出最終的 .mp4 影片檔案。"
+    ]
+  }
+]
