@@ -60,7 +60,8 @@ async function loadArticles() {
   try {
     const res = await fetch('articles.json');
     if (!res.ok) throw new Error('fetch failed');
-    _articlesCache = await res.json();
+    const data = await res.json();
+    _articlesCache = data.sort((a, b) => new Date(b.date) - new Date(a.date));
     return _articlesCache;
   } catch (e) {
     console.error('無法載入 articles.json：', e);
