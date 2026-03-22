@@ -22,9 +22,17 @@ function formatDateShort(str) {
   return str.replace(/-/g, '.');
 }
 
-/** 取得 YouTube 縮圖 URL（高畫質，若 maxres 不存在則 fallback） */
+/** 取得 YouTube 縮圖 URL（優先最高畫質） */
 function ytThumb(id) {
-  return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+  return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+}
+
+/** 縮圖載入失敗時降級 */
+function ytThumbFallback(img) {
+  const id = img.src.match(/vi\/([^/]+)\//)?.[1];
+  if (id && img.src.includes('maxresdefault')) {
+    img.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+  }
 }
 
 /** 從 URL query string 取得參數 */
@@ -221,7 +229,7 @@ function renderLatestSection(articles) {
   container.innerHTML = `
     <article class="featured-card card">
       <a href="article.html?slug=${featured.slug}" class="card-img-wrap">
-        <img src="${ytThumb(featured.youtubeId)}" alt="${featured.title}" loading="lazy" width="800" height="420">
+        <img src="${ytThumb(featured.youtubeId)}" alt="${featured.title}" loading="lazy" width="800" height="420" onerror="ytThumbFallback(this)">
         <span class="card-tag">${featured.category}</span>
       </a>
       <div class="card-body">
@@ -238,7 +246,7 @@ function renderLatestSection(articles) {
       ${rest.map(a => `
         <article class="card small-card">
           <a href="article.html?slug=${a.slug}" class="card-img-wrap">
-            <img src="${ytThumb(a.youtubeId)}" alt="${a.title}" loading="lazy" width="400" height="250">
+            <img src="${ytThumb(a.youtubeId)}" alt="${a.title}" loading="lazy" width="400" height="250" onerror="ytThumbFallback(this)">
             <span class="card-tag">${a.category}</span>
           </a>
           <div class="card-body">
@@ -309,7 +317,7 @@ function renderCategorySection(articles) {
   container.innerHTML = catArticles.map(a => `
     <article class="card">
       <a href="article.html?slug=${a.slug}" class="card-img-wrap">
-        <img src="${ytThumb(a.youtubeId)}" alt="${a.title}" loading="lazy" width="600" height="360">
+        <img src="${ytThumb(a.youtubeId)}" alt="${a.title}" loading="lazy" width="600" height="360" onerror="ytThumbFallback(this)">
         <span class="card-tag">${a.category}</span>
       </a>
       <div class="card-body">
