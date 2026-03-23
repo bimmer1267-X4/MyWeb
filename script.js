@@ -1,7 +1,7 @@
 'use strict';
 
 /* ============================================================
-   ZenTech — 互動腳本
+   慢慢說．順順來 — 互動腳本
    功能：
      1. 從 articles.json 動態載入文章
      2. 首頁：Hero 輪播、最新文章、分類文章、熱門側邊欄
@@ -361,7 +361,7 @@ function renderArticlePage(articles) {
   }
 
   // 更新 <title> 和 <meta description>
-  document.getElementById('pageTitle').textContent = `${article.title} - ZenTech`;
+  document.getElementById('pageTitle').textContent = `${article.title} - 慢慢說．順順來`;
   const descEl = document.getElementById('pageDesc');
   if (descEl) descEl.setAttribute('content', article.excerpt);
 

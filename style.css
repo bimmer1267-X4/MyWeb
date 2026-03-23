@@ -95,8 +95,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   color: var(--accent-1);
 }
 .logo-sub {
-  font-size: 14px;
-  color: var(--text-main);
+  font-size: 22px;
+  color: var(--accent-1);
   letter-spacing: 1px;
 }
 
@@ -371,7 +371,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 
 /* 精選大卡 */
 .featured-card { margin-bottom: 24px; }
-.featured-card .card-img-wrap { aspect-ratio: 16/8; }
+.featured-card .card-img-wrap { aspect-ratio: 16/9; }
 .featured-card .card-body h3 { font-size: 18px; }
 .featured-card .card-excerpt { -webkit-line-clamp: 4; }
 
@@ -487,7 +487,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 
 .footer-brand .logo { margin-bottom: 12px; }
 .footer-brand .logo-k { color: var(--accent-1); }
-.footer-brand .logo-sub { color: rgba(255,255,255,.9); }
+.footer-brand .logo-sub { color: var(--accent-1); }
 .footer-brand p {
   font-size: 13.5px;
   line-height: 1.7;
