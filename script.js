@@ -443,9 +443,24 @@ function renderArticlePage(articles) {
 }
 
 /* ============================================================
+   TSMC (2330) 儀表板 iframe 高度同步
+   ============================================================ */
+function initDashboardEmbed() {
+  const frame = document.getElementById('dashboardFrame');
+  if (!frame) return;
+  window.addEventListener('message', (e) => {
+    if (e.origin !== 'https://bimmer1267-x4.github.io') return;
+    if (!e.data || e.data.type !== 'tsmc-dashboard-height') return;
+    const height = Number(e.data.height);
+    if (height > 0) frame.style.height = `${height}px`;
+  });
+}
+
+/* ============================================================
    主程式入口
    ============================================================ */
 document.addEventListener('DOMContentLoaded', async () => {
+  initDashboardEmbed();
   const articles = await loadArticles();
 
   if (isArticlePage()) {
