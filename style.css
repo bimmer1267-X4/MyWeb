@@ -266,8 +266,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
    ============================================================ */
 .magazine-layout {
   display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 32px;
+  grid-template-columns: 1fr;
   align-items: start;
 }
 
@@ -539,10 +538,6 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
    RESPONSIVE — 平板 (768px ~ 1024px)
    ============================================================ */
 @media (max-width: 1024px) {
-  .magazine-layout {
-    grid-template-columns: 1fr 260px;
-    gap: 24px;
-  }
   .cards-grid { grid-template-columns: repeat(2, 1fr); }
   .cards-grid-3 { grid-template-columns: repeat(2, 1fr); }
   .footer-grid { grid-template-columns: 1fr 1fr; }
@@ -581,10 +576,6 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 
   /* News hero */
   .news-list { grid-template-columns: 1fr; }
-
-  /* Magazine layout → stacked */
-  .magazine-layout { grid-template-columns: 1fr; gap: 24px; }
-  .sidebar { order: -1; }
 
   /* Cards */
   .cards-grid { grid-template-columns: 1fr; }
