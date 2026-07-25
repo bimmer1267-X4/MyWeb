@@ -122,42 +122,6 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   background: hsla(16, 88%, 55%, 0.08);
 }
 
-/* Header YouTube 頻道小工具（取代原本的分類導覽列） */
-.header-yt-widget {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
-  padding: 6px 8px 6px 14px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-page);
-  border: 1px solid var(--border);
-  transition: border-color var(--transition), box-shadow var(--transition);
-}
-.header-yt-widget:hover {
-  border-color: var(--accent-1);
-  box-shadow: var(--shadow-card);
-}
-.header-yt-text {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-main);
-  white-space: nowrap;
-}
-.header-yt-btn {
-  display: inline-flex;
-  align-items: center;
-  background: #FF0000;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 6px 16px;
-  border-radius: var(--radius-lg);
-  white-space: nowrap;
-  transition: background var(--transition);
-}
-.header-yt-widget:hover .header-yt-btn { background: #cc0000; }
-
 /* ============================================================
    NEWS HERO
    ============================================================ */
@@ -607,8 +571,6 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 @media (max-width: 768px) {
 
   /* Header */
-  .header-yt-text { display: none; }
-  .header-yt-widget { gap: 8px; padding: 6px 6px 6px 10px; }
   .mini-nav { gap: 0; margin-inline-start: 4px; }
   .mini-nav a { padding: 6px 8px; font-size: 13px; }
 
@@ -632,15 +594,6 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   .slide-content .tag { font-size: 10px; margin-bottom: 8px; }
   .slide-content h2 { font-size: 14px; }
 
-  /* Header：窄螢幕下壓縮各元件寬度，避免溢出 */
-  .container { padding-inline: 12px; }
-  .header-inner { gap: 4px; }
-  .logo-img { height: 20px; margin-right: 2px; }
-  .logo-k, .logo-sub { font-size: 13px; }
-  .mini-nav { gap: 0; margin-inline-start: 0; }
-  .mini-nav a { padding: 6px 4px; font-size: 11px; }
-  .header-yt-widget { gap: 4px; padding: 4px 4px 4px 6px; }
-  .header-yt-btn { padding: 4px 10px; font-size: 11px; }
 }
 
 /* ============================================================
