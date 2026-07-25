@@ -267,7 +267,7 @@ function renderArticlePage(articles) {
       <span>分享：</span>
       <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}"
          target="_blank" rel="noopener" class="share-btn fb">Facebook</a>
-      <a href="https://www.youtube.com/@Dennis-In-TW"
+      <a href="https://www.youtube.com/@shunshun-dev"
          target="_blank" rel="noopener" class="share-btn yt">YouTube 頻道</a>
       <a href="https://line.me/R/msg/text/?${encodeURIComponent(article.title + ' ' + window.location.href)}"
          target="_blank" rel="noopener" class="share-btn line">LINE</a>
