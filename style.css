@@ -100,12 +100,34 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   letter-spacing: 1px;
 }
 
+/* 主要導覽（僅首頁／關於我） */
+.mini-nav {
+  display: flex;
+  gap: 4px;
+  margin-inline-start: 8px;
+}
+.mini-nav a {
+  display: block;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  transition: color var(--transition), background var(--transition);
+}
+.mini-nav a:hover,
+.mini-nav a.active {
+  color: var(--accent-1);
+  background: hsla(16, 88%, 55%, 0.08);
+}
+
 /* Header YouTube 頻道小工具（取代原本的分類導覽列） */
 .header-yt-widget {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-inline: auto;
+  margin-left: auto;
   padding: 6px 8px 6px 14px;
   border-radius: var(--radius-lg);
   background: var(--bg-page);
@@ -587,6 +609,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   /* Header */
   .header-yt-text { display: none; }
   .header-yt-widget { gap: 8px; padding: 6px 6px 6px 10px; }
+  .mini-nav { gap: 0; margin-inline-start: 4px; }
+  .mini-nav a { padding: 6px 8px; font-size: 13px; }
 
   /* News hero */
   .news-list { grid-template-columns: 1fr; }
@@ -607,6 +631,16 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   .slide-content { padding: 16px; }
   .slide-content .tag { font-size: 10px; margin-bottom: 8px; }
   .slide-content h2 { font-size: 14px; }
+
+  /* Header：窄螢幕下壓縮各元件寬度，避免溢出 */
+  .container { padding-inline: 12px; }
+  .header-inner { gap: 4px; }
+  .logo-img { height: 20px; margin-right: 2px; }
+  .logo-k, .logo-sub { font-size: 13px; }
+  .mini-nav { gap: 0; margin-inline-start: 0; }
+  .mini-nav a { padding: 6px 4px; font-size: 11px; }
+  .header-yt-widget { gap: 4px; padding: 4px 4px 4px 6px; }
+  .header-yt-btn { padding: 4px 10px; font-size: 11px; }
 }
 
 /* ============================================================
