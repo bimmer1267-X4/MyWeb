@@ -158,6 +158,40 @@ async function renderNewsHero() {
   `;
 }
 
+/* ── 台積電（2330）個股新聞來源設定 ── */
+const TSMC_NEWS_SOURCE = {
+  name: 'Google 新聞',
+  url: 'https://news.google.com/rss/search?q=' + encodeURIComponent('台積電 OR 2330') + '&hl=zh-TW&gl=TW&ceid=TW:zh-Hant',
+};
+
+/** 渲染台積電（2330）個股新聞區（做法同即時科技新聞，只是只抓台積電相關） */
+async function renderTsmcNews() {
+  const container = document.getElementById('tsmcNews');
+  if (!container) return;
+
+  const items = (await fetchRSS(TSMC_NEWS_SOURCE)).sort((a, b) => b.pubDate - a.pubDate).slice(0, 12);
+
+  if (!items.length) {
+    container.innerHTML = '<p class="news-error">暫時無法取得台積電相關新聞，請稍後重新整理。</p>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="news-hero-header">
+      <span class="news-live-dot"></span>
+      <span class="news-hero-label">台積電（2330）即時新聞</span>
+    </div>
+    <ul class="news-list">
+      ${items.map(item => `
+        <li class="news-item">
+          <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+          <span class="news-time">${timeAgo(item.pubDate)}</span>
+        </li>
+      `).join('')}
+    </ul>
+  `;
+}
+
 /* ============================================================
    文章頁渲染
    ============================================================ */
@@ -289,5 +323,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
     // 首頁：即時新聞
     renderNewsHero();
+    renderTsmcNews();
   }
 });
