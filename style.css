@@ -382,6 +382,58 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 }
 
 /* ============================================================
+   主欄 儀表板連結卡
+   ============================================================ */
+.dashboard-link-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+}
+.dashboard-link-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+  border-color: var(--accent-1);
+}
+.dashboard-link-icon {
+  font-size: 40px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.dashboard-link-body { flex: 1; min-width: 0; }
+.dashboard-link-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+.dashboard-link-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.dashboard-link-cta {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent-1);
+  padding: 10px 20px;
+  border-radius: var(--radius-lg);
+  white-space: nowrap;
+  transition: background var(--transition);
+}
+.dashboard-link-card:hover .dashboard-link-cta { background: #d13d16; }
+
+@media (max-width: 480px) {
+  .dashboard-link-card { flex-direction: column; text-align: center; padding: 24px; }
+}
+
+/* ============================================================
    SIDEBAR
    ============================================================ */
 .sidebar { display: flex; flex-direction: column; gap: 24px; }
