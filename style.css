@@ -100,11 +100,11 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   letter-spacing: 1px;
 }
 
-/* 主要導覽（僅首頁／關於我） */
+/* 主要導覽（僅首頁／關於我），靠右對齊 */
 .mini-nav {
   display: flex;
   gap: 4px;
-  margin-inline-start: 8px;
+  margin-inline-start: auto;
 }
 .mini-nav a {
   display: block;
@@ -431,7 +431,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 @media (max-width: 768px) {
 
   /* Header */
-  .mini-nav { gap: 0; margin-inline-start: 4px; }
+  .mini-nav { gap: 0; }
   .mini-nav a { padding: 6px 8px; font-size: 13px; }
 
   /* News hero */
