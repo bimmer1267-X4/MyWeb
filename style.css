@@ -274,7 +274,9 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   display: block;
   width: 100%;
   border: 0;
-  height: 1200px;
+  /* 先給接近實際內容高度的預設值，postMessage 抵達後才會被 JS 覆寫成精確值，
+     這樣即使高度回報訊息還沒送達或延遲，也不會出現內縮捲軸 */
+  height: 2900px;
   transition: height 0.2s ease;
 }
 
