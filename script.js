@@ -3,10 +3,8 @@
 /* ============================================================
    ２３３０．順順來 — 互動腳本
    功能：
-     1. 從 articles.json 動態載入文章
-     2. 首頁：Hero 輪播、最新文章、分類文章、熱門側邊欄
-     3. 文章頁：渲染完整文章 + YouTube 嵌入 + 相關文章
-     4. 漢堡選單 / 搜尋列
+     1. 首頁：即時科技新聞、TSMC 儀表板 iframe 高度同步
+     2. 文章頁：從 articles.json 渲染完整文章 + YouTube 嵌入 + 相關文章
    ============================================================ */
 
 /* ── 工具函式 ── */
@@ -160,184 +158,6 @@ async function renderNewsHero() {
   `;
 }
 
-const PER_PAGE = 7; // 每頁：1 精選 + 6 小卡
-
-/** 產生分頁網址 */
-function pageUrl(p, cat, tag) {
-  const params = new URLSearchParams();
-  if (cat) params.set('cat', cat);
-  if (tag) params.set('tag', tag);
-  if (p > 1) params.set('page', String(p));
-  const q = params.toString();
-  return `index.html${q ? '?' + q : ''}`;
-}
-
-/** 渲染頁碼列 */
-function renderPagination(current, total, cat, tag) {
-  if (total <= 1) return '';
-
-  // 產生頁碼序列（含省略號）
-  const nums = [];
-  for (let i = 1; i <= total; i++) {
-    if (i === 1 || i === total || Math.abs(i - current) <= 1) {
-      nums.push(i);
-    } else if (nums[nums.length - 1] !== '…') {
-      nums.push('…');
-    }
-  }
-
-  const prev = current > 1
-    ? `<a href="${pageUrl(current - 1, cat, tag)}" class="page-btn" aria-label="上一頁">‹</a>`
-    : `<span class="page-btn disabled">‹</span>`;
-  const next = current < total
-    ? `<a href="${pageUrl(current + 1, cat, tag)}" class="page-btn" aria-label="下一頁">›</a>`
-    : `<span class="page-btn disabled">›</span>`;
-
-  const pages = nums.map(n =>
-    n === '…'
-      ? `<span class="page-ellipsis">…</span>`
-      : `<a href="${pageUrl(n, cat, tag)}" class="page-btn${n === current ? ' active' : ''}">${n}</a>`
-  ).join('');
-
-  return `<nav class="pagination" aria-label="文章分頁">${prev}${pages}${next}</nav>`;
-}
-
-/** 渲染「最新文章」欄（精選卡 + 小卡 grid + 分頁） */
-function renderLatestSection(articles) {
-  const container = document.getElementById('latestArticles');
-  if (!container) return;
-
-  const cat  = getParam('cat');
-  const tag  = getParam('tag');
-  const page = Math.max(1, parseInt(getParam('page') || '1', 10));
-
-  let filtered = articles;
-  if (cat) filtered = articles.filter(a => a.category === cat);
-  if (tag) filtered = articles.filter(a => a.tags.includes(tag));
-
-  // 更新區塊標題
-  const titleEl = document.getElementById('mainSectionTitle');
-  if (titleEl) {
-    if (cat) titleEl.textContent = `${cat} 文章`;
-    else if (tag) titleEl.textContent = `標籤：${tag}`;
-    else titleEl.textContent = '最新文章';
-  }
-
-  if (filtered.length === 0) {
-    container.innerHTML = '<p style="color:var(--text-muted);padding:20px 0;">沒有找到相關文章。</p>';
-    return;
-  }
-
-  const totalPages = Math.ceil(filtered.length / PER_PAGE);
-  const safePage   = Math.min(page, totalPages);
-  const pageItems  = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
-  const [featured, ...rest] = pageItems;
-
-  container.innerHTML = `
-    <article class="featured-card card">
-      <a href="article.html?slug=${featured.slug}" class="card-img-wrap">
-        <img src="${ytThumb(featured.youtubeId)}" alt="${featured.title}" loading="lazy" width="800" height="420" onload="ytThumbCheck(this)">
-        <span class="card-tag">${featured.category}</span>
-      </a>
-      <div class="card-body">
-        <h3><a href="article.html?slug=${featured.slug}">${featured.title}</a></h3>
-        <p class="card-excerpt">${featured.excerpt}</p>
-        <div class="card-meta">
-          <time datetime="${featured.date}">${formatDateShort(featured.date)}</time>
-        </div>
-      </div>
-    </article>
-
-    ${rest.length > 0 ? `
-    <div class="cards-grid">
-      ${rest.map(a => `
-        <article class="card small-card">
-          <a href="article.html?slug=${a.slug}" class="card-img-wrap">
-            <img src="${ytThumb(a.youtubeId)}" alt="${a.title}" loading="lazy" width="400" height="250" onload="ytThumbCheck(this)">
-            <span class="card-tag">${a.category}</span>
-          </a>
-          <div class="card-body">
-            <h3><a href="article.html?slug=${a.slug}">${a.title}</a></h3>
-            <div class="card-meta">
-              <time datetime="${a.date}">${formatDateShort(a.date)}</time>
-            </div>
-          </div>
-        </article>
-      `).join('')}
-    </div>` : ''}
-
-    ${renderPagination(safePage, totalPages, cat, tag)}
-  `;
-}
-
-/** 渲染熱門標籤（從所有文章的 tags 統計） */
-function renderTagCloud(articles) {
-  const el = document.getElementById('tagCloud');
-  if (!el) return;
-  const count = {};
-  articles.forEach(a => (a.tags || []).forEach(t => { count[t] = (count[t] || 0) + 1; }));
-  const sorted = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 20);
-  if (!sorted.length) { el.style.display = 'none'; return; }
-  el.innerHTML = sorted.map(([tag]) =>
-    `<a href="index.html?tag=${encodeURIComponent(tag)}" class="tag-item">${tag}</a>`
-  ).join('');
-}
-
-/** 渲染熱門文章側邊欄（前 5 篇） */
-function renderPopularList(articles) {
-  const list = document.getElementById('popularList');
-  if (!list) return;
-  list.innerHTML = articles.slice(0, 5).map((a, i) => `
-    <li>
-      <a href="article.html?slug=${a.slug}">
-        <span class="popular-num">${String(i + 1).padStart(2, '0')}</span>
-        <div>
-          <p class="popular-title">${a.title}</p>
-          <time datetime="${a.date}">${formatDateShort(a.date)}</time>
-        </div>
-      </a>
-    </li>
-  `).join('');
-}
-
-/** 渲染分類文章區（AI 焦點等） */
-function renderCategorySection(articles) {
-  const container = document.getElementById('categoryArticles');
-  const titleEl = document.getElementById('categorySectionTitle');
-  const linkEl = document.getElementById('categorySectionLink');
-  if (!container) return;
-
-  // 預設顯示 AI 分類，若已在篩選模式則顯示「評測」
-  const currentCat = getParam('cat') || getParam('tag') || getParam('q');
-  const displayCat = currentCat ? '評測' : 'AI';
-
-  if (titleEl) titleEl.textContent = `${displayCat} 焦點`;
-  if (linkEl) linkEl.href = `index.html?cat=${displayCat}`;
-
-  const catArticles = articles.filter(a => a.category === displayCat).slice(0, 6);
-  if (catArticles.length === 0) {
-    container.innerHTML = '';
-    document.getElementById('categorySection')?.style.setProperty('display', 'none');
-    return;
-  }
-
-  container.innerHTML = catArticles.map(a => `
-    <article class="card">
-      <a href="article.html?slug=${a.slug}" class="card-img-wrap">
-        <img src="${ytThumb(a.youtubeId)}" alt="${a.title}" loading="lazy" width="600" height="360" onload="ytThumbCheck(this)">
-        <span class="card-tag">${a.category}</span>
-      </a>
-      <div class="card-body">
-        <h3><a href="article.html?slug=${a.slug}">${a.title}</a></h3>
-        <p class="card-excerpt">${a.excerpt}</p>
-        <div class="card-meta">
-          <time datetime="${a.date}">${formatDateShort(a.date)}</time>
-        </div>
-      </div>
-    </article>
-  `).join('');
-}
-
 /* ============================================================
    文章頁渲染
    ============================================================ */
@@ -461,17 +281,13 @@ function initDashboardEmbed() {
    ============================================================ */
 document.addEventListener('DOMContentLoaded', async () => {
   initDashboardEmbed();
-  const articles = await loadArticles();
 
   if (isArticlePage()) {
     // 文章頁
+    const articles = await loadArticles();
     renderArticlePage(articles);
   } else {
-    // 首頁：並行執行新聞抓取 + 文章渲染
-    renderNewsHero(); // 不 await，讓新聞與文章同時載入
-    renderLatestSection(articles);
-    renderPopularList(articles);
-    renderTagCloud(articles);
-    renderCategorySection(articles);
+    // 首頁：即時新聞
+    renderNewsHero();
   }
 });
