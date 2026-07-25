@@ -100,58 +100,41 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   letter-spacing: 1px;
 }
 
-/* 主要導覽 */
-.main-nav { margin-inline: auto; }
-.main-nav ul {
-  display: flex;
-  gap: 4px;
-}
-.main-nav a {
-  display: block;
-  padding: 6px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-main);
-  transition: color var(--transition), background var(--transition);
-}
-.main-nav a:hover,
-.main-nav a.active {
-  color: var(--accent-1);
-  background: hsla(241, 82%, 55%, 0.06);
-}
-.main-nav a.active {
-  background: hsla(16, 88%, 55%, 0.08);
-}
-
-/* Header 右側操作 */
-.header-actions {
+/* Header YouTube 頻道小工具（取代原本的分類導覽列） */
+.header-yt-widget {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  gap: 10px;
+  margin-inline: auto;
+  padding: 6px 8px 6px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
-
-/* 漢堡選單按鈕 */
-.hamburger {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  width: 36px; height: 36px;
-  padding: 6px;
-  border-radius: var(--radius-sm);
+.header-yt-widget:hover {
+  border-color: var(--accent-1);
+  box-shadow: var(--shadow-card);
 }
-.hamburger span {
-  display: block;
-  height: 2px;
-  background: var(--text-main);
-  border-radius: 2px;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+.header-yt-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
 }
-.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.hamburger.open span:nth-child(2) { opacity: 0; }
-.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.header-yt-btn {
+  display: inline-flex;
+  align-items: center;
+  background: #FF0000;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: var(--radius-lg);
+  white-space: nowrap;
+  transition: background var(--transition);
+}
+.header-yt-widget:hover .header-yt-btn { background: #cc0000; }
 
 /* ============================================================
    NEWS HERO
@@ -555,29 +538,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 @media (max-width: 768px) {
 
   /* Header */
-  .hamburger { display: flex; }
-  .main-nav {
-    position: fixed;
-    inset: var(--header-h) 0 0 0;
-    background: var(--bg-header);
-    transform: translateX(100%);
-    transition: transform 0.3s ease;
-    overflow-y: auto;
-    z-index: 99;
-    margin: 0;
-  }
-  .main-nav.open { transform: translateX(0); }
-  .main-nav ul {
-    flex-direction: column;
-    gap: 0;
-    padding: 12px 0;
-  }
-  .main-nav a {
-    padding: 14px 24px;
-    font-size: 16px;
-    border-radius: 0;
-    border-bottom: 1px solid var(--divider);
-  }
+  .header-yt-text { display: none; }
+  .header-yt-widget { gap: 8px; padding: 6px 6px 6px 10px; }
 
   /* News hero */
   .news-list { grid-template-columns: 1fr; }

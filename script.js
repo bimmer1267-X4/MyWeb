@@ -443,45 +443,9 @@ function renderArticlePage(articles) {
 }
 
 /* ============================================================
-   漢堡選單
-   ============================================================ */
-function initHamburger() {
-  const hamburger = document.getElementById('hamburger');
-  const mainNav = document.getElementById('mainNav');
-  if (!hamburger || !mainNav) return;
-
-  hamburger.addEventListener('click', () => {
-    const isOpen = mainNav.classList.toggle('open');
-    hamburger.classList.toggle('open', isOpen);
-    hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    document.body.style.overflow = isOpen ? 'hidden' : '';
-  });
-
-  mainNav.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
-      mainNav.classList.remove('open');
-      hamburger.classList.remove('open');
-      hamburger.setAttribute('aria-expanded', 'false');
-      document.body.style.overflow = '';
-    });
-  });
-
-  window.addEventListener('resize', () => {
-    if (window.innerWidth > 768) {
-      mainNav.classList.remove('open');
-      hamburger.classList.remove('open');
-      hamburger.setAttribute('aria-expanded', 'false');
-      document.body.style.overflow = '';
-    }
-  });
-}
-
-/* ============================================================
    主程式入口
    ============================================================ */
 document.addEventListener('DOMContentLoaded', async () => {
-  initHamburger();
-
   const articles = await loadArticles();
 
   if (isArticlePage()) {
