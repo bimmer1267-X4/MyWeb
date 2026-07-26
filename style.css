@@ -274,8 +274,11 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   display: block;
   width: 100%;
   border: 0;
+  overflow: hidden;
   /* 先給接近實際內容高度的預設值，postMessage 抵達後才會被 JS 覆寫成精確值，
-     這樣即使高度回報訊息還沒送達或延遲，也不會出現內縮捲軸 */
+     這樣即使高度回報訊息還沒送達或延遲，也不會出現內縮捲軸；
+     scrolling="no" + overflow:hidden 讓 iframe 本身永遠不出現自己的捲軸，
+     全部改由外層頁面捲動，避免巢狀雙捲軸操作不順的問題 */
   height: 2900px;
   transition: height 0.2s ease;
 }
