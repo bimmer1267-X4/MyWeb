@@ -49,6 +49,13 @@ function isArticlePage() {
   return window.location.pathname.includes('article.html');
 }
 
+/** 去除HTML標籤取得純文字（rss2json的description/content欄位是原始RSS描述的HTML片段） */
+function stripHtml(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+}
+
 /* ── 載入文章資料 ── */
 
 let _articlesCache = null;
@@ -100,7 +107,10 @@ function timeAgo(date) {
   return `${Math.floor(hrs / 24)} 天前`;
 }
 
-/** 透過 rss2json 抓取單一來源 */
+/** 透過 rss2json 抓取單一來源。注意：刻意不加任何新參數（例如count/timeoutMs）——
+ *  這裡多帶thumbnail/excerpt只是多讀rss2json回應裡本來就有的欄位，不影響函式簽名，
+ *  也就不會影響到其他直接把fetchRSS當回呼傳的地方(例如即時科技新聞用的
+ *  NEWS_SOURCES.map(fetchRSS))，維持首頁完全不受影響 */
 async function fetchRSS(source) {
   const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}&count=10`;
   try {
@@ -108,12 +118,15 @@ async function fetchRSS(source) {
     const data = await res.json();
     if (data.status !== 'ok') return [];
     return data.items.map(item => ({
-      title:   item.title.trim(),
-      link:    item.link,
-      pubDate: new Date(item.pubDate),
-      source:  source.name,
-      bg:      source.bg,
-      text:    source.text,
+      title:     item.title.trim(),
+      link:      item.link,
+      pubDate:   new Date(item.pubDate),
+      source:    source.name,
+      bg:        source.bg,
+      text:      source.text,
+      // thumbnail/description不是每則新聞都有，缺欄位時給空字串，渲染端優雅處理
+      thumbnail: item.thumbnail || '',
+      excerpt:   stripHtml(item.description || item.content || '').slice(0, 80),
     }));
   } catch {
     return [];
@@ -215,8 +228,15 @@ async function renderTsmcNewsPage() {
   listEl.innerHTML = tsmcNewsListHtml(items);
   cardEl.innerHTML = items.map(item => `
     <a class="news-card" href="${item.link}" target="_blank" rel="noopener noreferrer">
-      <h3 class="news-card-title">${item.title}</h3>
-      <span class="news-card-time">${timeAgo(item.pubDate)}</span>
+      ${item.thumbnail ? `
+        <div class="news-card-img">
+          <img src="${item.thumbnail}" alt="" loading="lazy" onerror="this.closest('.news-card-img').remove()">
+        </div>` : ''}
+      <div class="news-card-body">
+        <h3 class="news-card-title">${item.title}</h3>
+        ${item.excerpt ? `<p class="news-card-excerpt">${item.excerpt}</p>` : ''}
+        <span class="news-card-time">${timeAgo(item.pubDate)}</span>
+      </div>
     </a>
   `).join('');
 }
