@@ -231,6 +231,89 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 }
 
 /* ============================================================
+   新聞卡片牆頁面（news-tsmc.html / news-tech.html）
+   ============================================================ */
+.news-page-title {
+  font-size: clamp(20px, 3vw, 26px);
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 20px;
+}
+
+.news-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.news-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.news-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+  color: inherit;
+}
+
+/* 沒有縮圖的新聞卡片不會輸出這個區塊（見script.js），卡片直接從內文開始，不留空白 */
+.news-card-img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--bg-page);
+}
+.news-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.news-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  flex: 1;
+}
+
+.news-card-body .news-badge { align-self: flex-start; }
+
+.news-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--text-main);
+}
+
+.news-card-excerpt {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.news-card-time {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: auto;
+}
+
+@media (max-width: 768px) {
+  .news-card-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
    MAGAZINE LAYOUT
    ============================================================ */
 .magazine-layout {
@@ -446,6 +529,14 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
   .footer-brand { grid-column: auto; }
   .footer-bottom { flex-direction: column; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  /* 4個選單項目＋logo在極窄螢幕擠不下同一列，讓nav換到logo下方第二行，
+     避免文字被裁掉或整頁出現水平捲動 */
+  .header-inner { flex-wrap: wrap; height: auto; padding-block: 10px; }
+  .mini-nav { width: 100%; gap: 2px; }
+  .mini-nav a { padding: 5px 6px; font-size: 12px; }
 }
 
 /* ============================================================
