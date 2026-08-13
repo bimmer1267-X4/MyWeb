@@ -112,6 +112,24 @@ function faviconUrl(link) {
   }
 }
 
+/** 簡單字串雜湊（純前端演算，不抓任何外部資料），同一個標題永遠算出同一個值 */
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0; // 轉成32位元整數
+  }
+  return Math.abs(hash);
+}
+
+/** 依標題算出一組固定的漸層色帶（同一則新聞每次重新整理顏色都一樣），
+ *  取代真實文章配圖——這個新聞來源(Google新聞RSS)本身沒有圖可用 */
+function gradientForTitle(title) {
+  const hue1 = hashString(title) % 360;
+  const hue2 = (hue1 + 45) % 360;
+  return `linear-gradient(135deg, hsl(${hue1}, 70%, 55%), hsl(${hue2}, 70%, 55%))`;
+}
+
 /** 透過 rss2json 抓取單一來源。注意：刻意不加任何新參數（例如count/timeoutMs）——
  *  這裡多帶favicon只是多衍生資料，不影響函式簽名，也就不會影響到其他直接把
  *  fetchRSS當回呼傳的地方(例如即時科技新聞用的NEWS_SOURCES.map(fetchRSS))，
@@ -232,6 +250,7 @@ async function renderTsmcNewsPage() {
   listEl.innerHTML = tsmcNewsListHtml(items);
   cardEl.innerHTML = items.map(item => `
     <a class="news-card" href="${item.link}" target="_blank" rel="noopener noreferrer">
+      <div class="news-card-accent" style="background:${gradientForTitle(item.title)};"></div>
       <div class="news-card-body">
         <div class="news-card-meta">
           ${item.favicon ? `<img class="news-card-favicon" src="${item.favicon}" alt="" loading="lazy" onerror="this.remove()">` : ''}
