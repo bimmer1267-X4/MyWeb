@@ -285,17 +285,6 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   line-height: 1.5;
 }
 
-.news-card-excerpt {
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--text-muted);
-  flex: 1;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
 .news-card-time {
   font-size: 12px;
   color: var(--text-muted);
