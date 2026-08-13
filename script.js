@@ -142,8 +142,12 @@ async function renderNewsHero() {
   const container = document.getElementById('newsHero');
   if (!container) return;
 
-  // 並行抓取所有來源
-  const results = await Promise.all(NEWS_SOURCES.map(fetchRSS));
+  // 並行抓取所有來源。注意：一定要包成箭頭函式明確只傳source這一個參數——
+  // 直接寫 NEWS_SOURCES.map(fetchRSS) 的話，Array.prototype.map會把
+  // (element, index, array)三個參數都傳給fetchRSS，導致陣列index被誤當成
+  // count、整個NEWS_SOURCES陣列被誤當成timeoutMs(陣列轉數字是NaN，setTimeout
+  // 對NaN delay會當成0處理，變成請求發出後幾乎立刻被abort，完全抓不到資料)
+  const results = await Promise.all(NEWS_SOURCES.map(source => fetchRSS(source)));
   const all = results.flat().sort((a, b) => b.pubDate - a.pubDate);
 
   if (!all.length) {
