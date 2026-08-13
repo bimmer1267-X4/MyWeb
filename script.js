@@ -49,6 +49,13 @@ function isArticlePage() {
   return window.location.pathname.includes('article.html');
 }
 
+/** 去除HTML標籤取得純文字（rss2json的description/content欄位是原始RSS描述的HTML片段） */
+function stripHtml(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+}
+
 /* ── 載入文章資料 ── */
 
 let _articlesCache = null;
@@ -100,7 +107,10 @@ function timeAgo(date) {
   return `${Math.floor(hrs / 24)} 天前`;
 }
 
-/** 透過 rss2json 抓取單一來源 */
+/** 透過 rss2json 抓取單一來源。注意：刻意不加任何新參數（例如count/timeoutMs）——
+ *  這裡多帶thumbnail/excerpt只是多讀rss2json回應裡本來就有的欄位，不影響函式簽名，
+ *  也就不會影響到其他直接把fetchRSS當回呼傳的地方(例如即時科技新聞用的
+ *  NEWS_SOURCES.map(fetchRSS))，維持首頁完全不受影響 */
 async function fetchRSS(source) {
   const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}&count=10`;
   try {
@@ -108,12 +118,15 @@ async function fetchRSS(source) {
     const data = await res.json();
     if (data.status !== 'ok') return [];
     return data.items.map(item => ({
-      title:   item.title.trim(),
-      link:    item.link,
-      pubDate: new Date(item.pubDate),
-      source:  source.name,
-      bg:      source.bg,
-      text:    source.text,
+      title:     item.title.trim(),
+      link:      item.link,
+      pubDate:   new Date(item.pubDate),
+      source:    source.name,
+      bg:        source.bg,
+      text:      source.text,
+      // thumbnail/description不是每則新聞都有，缺欄位時給空字串，渲染端優雅處理
+      thumbnail: item.thumbnail || '',
+      excerpt:   stripHtml(item.description || item.content || '').slice(0, 80),
     }));
   } catch {
     return [];
@@ -164,19 +177,10 @@ const TSMC_NEWS_SOURCE = {
   url: 'https://news.google.com/rss/search?q=' + encodeURIComponent('台積電 OR 2330') + '&hl=zh-TW&gl=TW&ceid=TW:zh-Hant',
 };
 
-/** 渲染台積電（2330）個股新聞區（做法同即時科技新聞，只是只抓台積電相關） */
-async function renderTsmcNews() {
-  const container = document.getElementById('tsmcNews');
-  if (!container) return;
-
-  const items = (await fetchRSS(TSMC_NEWS_SOURCE)).sort((a, b) => b.pubDate - a.pubDate).slice(0, 12);
-
-  if (!items.length) {
-    container.innerHTML = '<p class="news-error">暫時無法取得台積電相關新聞，請稍後重新整理。</p>';
-    return;
-  }
-
-  container.innerHTML = `
+/** 產生「台積電新聞」黑色列表區塊的HTML；首頁小工具跟news-tsmc.html新頁面共用
+ *  同一份render邏輯與資料，維持單一資料來源 */
+function tsmcNewsListHtml(items) {
+  return `
     <div class="news-hero-header">
       <span class="news-live-dot"></span>
       <span class="news-hero-label">台積電（2330）即時新聞</span>
@@ -190,6 +194,51 @@ async function renderTsmcNews() {
       `).join('')}
     </ul>
   `;
+}
+
+/** 渲染台積電（2330）個股新聞區（做法同即時科技新聞，只是只抓台積電相關） */
+async function renderTsmcNews() {
+  const container = document.getElementById('tsmcNews');
+  if (!container) return;
+
+  const items = (await fetchRSS(TSMC_NEWS_SOURCE)).sort((a, b) => b.pubDate - a.pubDate).slice(0, 12);
+
+  if (!items.length) {
+    container.innerHTML = '<p class="news-error">暫時無法取得台積電相關新聞，請稍後重新整理。</p>';
+    return;
+  }
+
+  container.innerHTML = tsmcNewsListHtml(items);
+}
+
+/** 渲染「台積電(2330)即時新聞」選單頁面（news-tsmc.html專用）：只fetch一次，
+ *  同一批資料同時渲染上方黑色列表(跟首頁一樣)跟下方卡片牆，不是分開再打一次API */
+async function renderTsmcNewsPage() {
+  const listEl = document.getElementById('tsmcNews');
+  const cardEl = document.getElementById('tsmcNewsCards');
+  if (!listEl || !cardEl) return;
+
+  const items = (await fetchRSS(TSMC_NEWS_SOURCE)).sort((a, b) => b.pubDate - a.pubDate).slice(0, 10);
+
+  if (!items.length) {
+    listEl.innerHTML = '<p class="news-error">暫時無法取得台積電相關新聞，請稍後重新整理。</p>';
+    return;
+  }
+
+  listEl.innerHTML = tsmcNewsListHtml(items);
+  cardEl.innerHTML = items.map(item => `
+    <a class="news-card" href="${item.link}" target="_blank" rel="noopener noreferrer">
+      ${item.thumbnail ? `
+        <div class="news-card-img">
+          <img src="${item.thumbnail}" alt="" loading="lazy" onerror="this.closest('.news-card-img').remove()">
+        </div>` : ''}
+      <div class="news-card-body">
+        <h3 class="news-card-title">${item.title}</h3>
+        ${item.excerpt ? `<p class="news-card-excerpt">${item.excerpt}</p>` : ''}
+        <span class="news-card-time">${timeAgo(item.pubDate)}</span>
+      </div>
+    </a>
+  `).join('');
 }
 
 /* ============================================================
@@ -320,6 +369,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 文章頁
     const articles = await loadArticles();
     renderArticlePage(articles);
+  } else if (document.getElementById('tsmcNewsCards')) {
+    // 台積電（2330）即時新聞選單頁
+    renderTsmcNewsPage();
   } else {
     // 首頁：即時新聞
     renderNewsHero();

@@ -231,6 +231,81 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 }
 
 /* ============================================================
+   新聞卡片牆（news-tsmc.html 用，跟上方黑色列表顯示同一批資料）
+   ============================================================ */
+.news-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.news-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.news-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+  color: inherit;
+}
+
+/* 沒有縮圖的新聞卡片不會輸出這個區塊（見script.js），卡片直接從內文開始，不留空白 */
+.news-card-img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--bg-page);
+}
+.news-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.news-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  flex: 1;
+}
+
+.news-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.5;
+}
+
+.news-card-excerpt {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.news-card-time {
+  display: block;
+  margin-top: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 480px) {
+  .news-card-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
    MAGAZINE LAYOUT
    ============================================================ */
 .magazine-layout {
@@ -446,6 +521,14 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
   .footer-brand { grid-column: auto; }
   .footer-bottom { flex-direction: column; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  /* 3個選單項目＋logo在極窄螢幕擠不下同一列，讓nav換到logo下方第二行，
+     避免文字被裁掉或整頁出現水平捲動 */
+  .header-inner { flex-wrap: wrap; height: auto; padding-block: 10px; }
+  .mini-nav { width: 100%; gap: 2px; }
+  .mini-nav a { padding: 5px 6px; font-size: 12px; }
 }
 
 /* ============================================================
