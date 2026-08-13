@@ -111,14 +111,19 @@ function timeAgo(date) {
  *  fetch() 本身沒有內建逾時，count拉高時rss2json有時回應會變慢甚至不回應，用
  *  AbortController加一個逾時上限，避免呼叫端(render函式)因為Promise永遠不resolve
  *  而卡在loading spinner畫面出不來 */
-async function fetchRSS(source, count = 10, timeoutMs = 12000) {
+async function fetchRSS(source, count = 10, timeoutMs = 18000) {
   const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}&count=${count}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(api, { signal: controller.signal });
     const data = await res.json();
-    if (data.status !== 'ok') return [];
+    if (data.status !== 'ok') {
+      // rss2json回status:'error'時通常會帶message說明原因(常見是count超過額度、
+      // rss_url解析失敗等)，印到console方便之後打開瀏覽器開發者工具排查
+      console.warn('[fetchRSS] rss2json回傳非ok狀態', source.name, data);
+      return [];
+    }
     return data.items.map(item => ({
       title:     item.title.trim(),
       link:      item.link,
@@ -130,7 +135,8 @@ async function fetchRSS(source, count = 10, timeoutMs = 12000) {
       thumbnail: item.thumbnail || '',
       excerpt:   stripHtml(item.description || item.content || '').slice(0, 90),
     }));
-  } catch {
+  } catch (e) {
+    console.warn('[fetchRSS] 抓取失敗', source.name, e.name === 'AbortError' ? `逾時(${timeoutMs}ms)` : e.message);
     return [];
   } finally {
     clearTimeout(timer);
@@ -242,7 +248,7 @@ async function renderNewsHeroFull() {
   const container = document.getElementById('newsHeroFull');
   if (!container) return;
 
-  const results = await Promise.all(NEWS_SOURCES.map(s => fetchRSS(s, 30)));
+  const results = await Promise.all(NEWS_SOURCES.map(s => fetchRSS(s, 20)));
   const all = results.flat().sort((a, b) => b.pubDate - a.pubDate);
 
   if (!all.length) {
@@ -258,7 +264,7 @@ async function renderTsmcNewsFull() {
   const container = document.getElementById('tsmcNewsFull');
   if (!container) return;
 
-  const items = (await fetchRSS(TSMC_NEWS_SOURCE, 30)).sort((a, b) => b.pubDate - a.pubDate);
+  const items = (await fetchRSS(TSMC_NEWS_SOURCE, 20)).sort((a, b) => b.pubDate - a.pubDate);
 
   if (!items.length) {
     container.innerHTML = '<p class="news-error">暫時無法取得台積電相關新聞，請稍後重新整理。</p>';
