@@ -521,10 +521,11 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
 }
 
 @media (max-width: 480px) {
-  /* 3個選單項目＋logo在極窄螢幕擠不下同一列，讓nav換到logo下方第二行，
-     避免文字被裁掉或整頁出現水平捲動 */
+  /* 4個選單項目＋logo在極窄螢幕擠不下同一列，讓nav換到logo下方第二行；
+     nav本身也要能換行(flex-wrap)，否則4個項目在很窄的手機(例如375px)
+     還是會擠成一整條超出螢幕寬度，造成整頁水平捲動 */
   .header-inner { flex-wrap: wrap; height: auto; padding-block: 10px; }
-  .mini-nav { width: 100%; gap: 2px; }
+  .mini-nav { width: 100%; gap: 2px; flex-wrap: wrap; justify-content: center; }
   .mini-nav a { padding: 5px 6px; font-size: 12px; }
 }
 

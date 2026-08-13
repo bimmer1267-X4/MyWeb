@@ -155,23 +155,10 @@ async function fetchRSS(source) {
   }
 }
 
-/** 渲染即時科技新聞區（取代 Hero Slider） */
-async function renderNewsHero() {
-  const container = document.getElementById('newsHero');
-  if (!container) return;
-
-  // 並行抓取所有來源
-  const results = await Promise.all(NEWS_SOURCES.map(fetchRSS));
-  const all = results.flat().sort((a, b) => b.pubDate - a.pubDate);
-
-  if (!all.length) {
-    container.innerHTML = '<p class="news-error">暫時無法取得新聞資料，請稍後重新整理。</p>';
-    return;
-  }
-
-  const items = all.slice(0, 16);
-
-  container.innerHTML = `
+/** 產生「即時科技新聞」黑色列表區塊的HTML；首頁小工具跟news-tech.html新頁面共用
+ *  同一份render邏輯與資料，維持單一資料來源（比照tsmcNewsListHtml的作法） */
+function newsHeroListHtml(items) {
+  return `
     <div class="news-hero-header">
       <span class="news-live-dot"></span>
       <span class="news-hero-label">即時科技新聞</span>
@@ -191,6 +178,23 @@ async function renderNewsHero() {
       `).join('')}
     </ul>
   `;
+}
+
+/** 渲染即時科技新聞區（取代 Hero Slider） */
+async function renderNewsHero() {
+  const container = document.getElementById('newsHero');
+  if (!container) return;
+
+  // 並行抓取所有來源
+  const results = await Promise.all(NEWS_SOURCES.map(fetchRSS));
+  const all = results.flat().sort((a, b) => b.pubDate - a.pubDate);
+
+  if (!all.length) {
+    container.innerHTML = '<p class="news-error">暫時無法取得新聞資料，請稍後重新整理。</p>';
+    return;
+  }
+
+  container.innerHTML = newsHeroListHtml(all.slice(0, 16));
 }
 
 /* ── 台積電（2330）個股新聞來源設定 ── */
@@ -248,18 +252,45 @@ async function renderTsmcNewsPage() {
   }
 
   listEl.innerHTML = tsmcNewsListHtml(items);
-  cardEl.innerHTML = items.map(item => `
+  cardEl.innerHTML = items.map(item => newsCardHtml(item)).join('');
+}
+
+/** 產生單則新聞卡片HTML；showBadge=true時額外顯示來源badge(即時科技新聞是多
+ *  來源，需要標出各則來自哪個來源；台積電新聞只有單一來源不需要) */
+function newsCardHtml(item, showBadge = false) {
+  return `
     <a class="news-card" href="${item.link}" target="_blank" rel="noopener noreferrer">
       <div class="news-card-accent" style="background:${gradientForTitle(item.title)};"></div>
       <div class="news-card-body">
         <div class="news-card-meta">
           ${item.favicon ? `<img class="news-card-favicon" src="${item.favicon}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+          ${showBadge ? `<span class="news-badge" style="background:${item.bg};color:${item.text};">${item.source}</span>` : ''}
           <span class="news-card-time">${timeAgo(item.pubDate)}</span>
         </div>
         <h3 class="news-card-title">${item.title}</h3>
       </div>
     </a>
-  `).join('');
+  `;
+}
+
+/** 渲染「即時科技新聞」選單頁面（news-tech.html專用）：只fetch一次，
+ *  同一批資料同時渲染上方黑色列表(跟首頁一樣)跟下方卡片牆，不是分開再打一次API */
+async function renderNewsHeroPage() {
+  const listEl = document.getElementById('newsHero');
+  const cardEl = document.getElementById('newsHeroCards');
+  if (!listEl || !cardEl) return;
+
+  const results = await Promise.all(NEWS_SOURCES.map(s => fetchRSS(s)));
+  const all = results.flat().sort((a, b) => b.pubDate - a.pubDate);
+
+  if (!all.length) {
+    listEl.innerHTML = '<p class="news-error">暫時無法取得新聞資料，請稍後重新整理。</p>';
+    return;
+  }
+
+  const items = all.slice(0, 16);
+  listEl.innerHTML = newsHeroListHtml(items);
+  cardEl.innerHTML = items.map(item => newsCardHtml(item, true)).join('');
 }
 
 /* ============================================================
@@ -393,6 +424,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else if (document.getElementById('tsmcNewsCards')) {
     // 台積電（2330）即時新聞選單頁
     renderTsmcNewsPage();
+  } else if (document.getElementById('newsHeroCards')) {
+    // 即時科技新聞選單頁
+    renderNewsHeroPage();
   } else {
     // 首頁：即時新聞
     renderNewsHero();
