@@ -107,10 +107,22 @@ function timeAgo(date) {
   return `${Math.floor(hrs / 24)} 天前`;
 }
 
+/** 從新聞連結網域取得favicon小圖標網址（用Google公開的favicon服務，不依賴
+ *  rss2json的thumbnail欄位——Google新聞RSS本身的description沒有內嵌圖片，
+ *  rss2json抓不到縮圖，改用來源網站的favicon當小圖標） */
+function faviconUrl(link) {
+  try {
+    const hostname = new URL(link).hostname;
+    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+  } catch {
+    return '';
+  }
+}
+
 /** 透過 rss2json 抓取單一來源。注意：刻意不加任何新參數（例如count/timeoutMs）——
- *  這裡多帶thumbnail/excerpt只是多讀rss2json回應裡本來就有的欄位，不影響函式簽名，
- *  也就不會影響到其他直接把fetchRSS當回呼傳的地方(例如即時科技新聞用的
- *  NEWS_SOURCES.map(fetchRSS))，維持首頁完全不受影響 */
+ *  這裡多帶favicon/excerpt只是多讀取/衍生資料，不影響函式簽名，也就不會影響到其他
+ *  直接把fetchRSS當回呼傳的地方(例如即時科技新聞用的NEWS_SOURCES.map(fetchRSS))，
+ *  維持首頁完全不受影響 */
 async function fetchRSS(source) {
   const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}&count=10`;
   try {
@@ -124,8 +136,8 @@ async function fetchRSS(source) {
       source:    source.name,
       bg:        source.bg,
       text:      source.text,
-      // thumbnail/description不是每則新聞都有，缺欄位時給空字串，渲染端優雅處理
-      thumbnail: item.thumbnail || '',
+      // description不是每則新聞都有，缺欄位時給空字串，渲染端優雅處理
+      favicon:   faviconUrl(item.link),
       excerpt:   stripHtml(item.description || item.content || '').slice(0, 80),
     }));
   } catch {
@@ -228,14 +240,13 @@ async function renderTsmcNewsPage() {
   listEl.innerHTML = tsmcNewsListHtml(items);
   cardEl.innerHTML = items.map(item => `
     <a class="news-card" href="${item.link}" target="_blank" rel="noopener noreferrer">
-      ${item.thumbnail ? `
-        <div class="news-card-img">
-          <img src="${item.thumbnail}" alt="" loading="lazy" onerror="this.closest('.news-card-img').remove()">
-        </div>` : ''}
       <div class="news-card-body">
+        <div class="news-card-meta">
+          ${item.favicon ? `<img class="news-card-favicon" src="${item.favicon}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+          <span class="news-card-time">${timeAgo(item.pubDate)}</span>
+        </div>
         <h3 class="news-card-title">${item.title}</h3>
         ${item.excerpt ? `<p class="news-card-excerpt">${item.excerpt}</p>` : ''}
-        <span class="news-card-time">${timeAgo(item.pubDate)}</span>
       </div>
     </a>
   `).join('');
