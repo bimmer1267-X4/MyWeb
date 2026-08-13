@@ -255,6 +255,14 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   color: inherit;
 }
 
+/* 依標題演算出的漸層色帶，取代真實文章配圖（這個新聞來源沒有圖可用），
+   純CSS背景色，不是圖片，不會有載入失敗的問題 */
+.news-card-accent {
+  height: 6px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
 .news-card-body {
   display: flex;
   flex-direction: column;
