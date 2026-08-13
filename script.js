@@ -107,11 +107,16 @@ function timeAgo(date) {
   return `${Math.floor(hrs / 24)} 天前`;
 }
 
-/** 透過 rss2json 抓取單一來源；count 預設10（首頁小工具用），新聞卡片牆頁面會傳較大的值 */
-async function fetchRSS(source, count = 10) {
+/** 透過 rss2json 抓取單一來源；count 預設10（首頁小工具用），新聞卡片牆頁面會傳較大的值。
+ *  fetch() 本身沒有內建逾時，count拉高時rss2json有時回應會變慢甚至不回應，用
+ *  AbortController加一個逾時上限，避免呼叫端(render函式)因為Promise永遠不resolve
+ *  而卡在loading spinner畫面出不來 */
+async function fetchRSS(source, count = 10, timeoutMs = 12000) {
   const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}&count=${count}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(api);
+    const res = await fetch(api, { signal: controller.signal });
     const data = await res.json();
     if (data.status !== 'ok') return [];
     return data.items.map(item => ({
@@ -127,6 +132,8 @@ async function fetchRSS(source, count = 10) {
     }));
   } catch {
     return [];
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -231,7 +238,7 @@ async function renderNewsHeroFull() {
   const container = document.getElementById('newsHeroFull');
   if (!container) return;
 
-  const results = await Promise.all(NEWS_SOURCES.map(s => fetchRSS(s, 50)));
+  const results = await Promise.all(NEWS_SOURCES.map(s => fetchRSS(s, 30)));
   const all = results.flat().sort((a, b) => b.pubDate - a.pubDate);
 
   if (!all.length) {
@@ -247,7 +254,7 @@ async function renderTsmcNewsFull() {
   const container = document.getElementById('tsmcNewsFull');
   if (!container) return;
 
-  const items = (await fetchRSS(TSMC_NEWS_SOURCE, 50)).sort((a, b) => b.pubDate - a.pubDate);
+  const items = (await fetchRSS(TSMC_NEWS_SOURCE, 30)).sort((a, b) => b.pubDate - a.pubDate);
 
   if (!items.length) {
     container.innerHTML = '<p class="news-error">暫時無法取得台積電相關新聞，請稍後重新整理。</p>';
