@@ -90,6 +90,21 @@ const NEWS_SOURCES = [
   },
 ];
 
+/** rss2json回傳的pubDate格式是"YYYY-MM-DD HH:MM:SS"（沒有標示時區），這種非ISO
+ *  8601格式(空白分隔、不是"T")被瀏覽器的Date建構子解析時，行為是「當成瀏覽器
+ *  所在時區的本地時間」，但實測(2026-08-14以真實新聞更新時間比對)確認這個時間
+ *  其實是UTC——直接用new Date()解析會讓算出來的「幾小時前」對台北訪客多算8小時
+ *  (顯示的時間比實際發布時間更舊)。這裡明確把字串拆解、用Date.UTC()當UTC時間
+ *  解析，不依賴瀏覽器對這種曖昧格式的預設行為；格式不符預期時退回原生解析，不會
+ *  拋錯（例如rss2json文件裡另一種帶時區的"Thu, 11 Jun 2020 00:00:00 GMT"格式，
+ *  這種格式本身有明確時區標記，交給瀏覽器原生解析就是正確的） */
+function parseRssPubDate(str) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/.exec(str || '');
+  if (!m) return new Date(str);
+  const [, y, mo, d, h, mi, s] = m.map(Number);
+  return new Date(Date.UTC(y, mo - 1, d, h, mi, s));
+}
+
 /** 把 RSS 日期距今轉為「xx 分鐘前」格式 */
 function timeAgo(date) {
   const mins = Math.floor((Date.now() - date) / 60000);
@@ -144,7 +159,7 @@ async function fetchRSS(source) {
     return data.items.map(item => ({
       title:     item.title.trim(),
       link:      item.link,
-      pubDate:   new Date(item.pubDate),
+      pubDate:   parseRssPubDate(item.pubDate),
       source:    source.name,
       bg:        source.bg,
       text:      source.text,
